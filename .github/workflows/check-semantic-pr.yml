@@ -1,0 +1,12 @@
+name: Check Semantic PR
+on:
+  workflow_call:
+
+jobs:
+  semantic-pr:
+    name: Validate PR title and commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Ezard/semantic-prs@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
