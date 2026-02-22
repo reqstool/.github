@@ -1,0 +1,28 @@
+enabled: true
+titleAndCommits: true
+
+types:
+  # User-required types
+  - feat        # new feature
+  - fix         # bug fix
+  - refactor    # code restructure without behaviour change
+  - chore       # routine maintenance, tooling
+  - security    # security fixes/improvements
+  # Best practice additions
+  - revert      # reverts a previous commit
+
+scopes:
+  # User-required scopes (domain/functional areas)
+  - reqs        # requirements tracking core logic
+  - docs        # documentation
+  - tests       # test infrastructure
+  - build       # build tooling
+  - ci          # CI/CD pipelines
+  - conf        # configuration
+  # Best practice additions
+  - api         # public API surface
+  - core        # core shared logic
+  - deps        # dependency management
+  - release     # release process
+  # Renovate-generated scopes (must match renovate.json5 semanticCommitScope values)
+  - github-actions  # used by Renovate for GitHub Actions updates: ci(github-actions): ...
