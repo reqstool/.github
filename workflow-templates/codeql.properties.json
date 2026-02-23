@@ -1,6 +1,0 @@
-{
-  "name": "CodeQL",
-  "description": "Analyze source code for vulnerabilities using GitHub CodeQL (security-extended query suite).",
-  "iconName": "octicon shield",
-  "categories": ["Security"]
-}
