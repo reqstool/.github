@@ -1,0 +1,43 @@
+name: CodeQL
+
+# Enforced org-wide via org ruleset "Require workflows":
+#   reqstool/.github / workflow-templates/codeql.yml
+#
+# Note: when used as a required workflow, only pull_request / pull_request_target
+# / merge_group triggers are honoured; push and schedule are ignored by the
+# ruleset engine but remain useful when this file is adopted into individual repos.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * MON"  # Weekly scan — Monday 06:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        # No 'languages:' → CodeQL auto-detects all supported languages in the repo.
+        # Add an explicit list if you need parallel jobs per language:
+        #   languages: [python, javascript-typescript]
+        with:
+          queries: security-extended
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
