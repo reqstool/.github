@@ -1,15 +1,220 @@
 {
-  extends: ["config:recommended"],
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+  ],
 
   semanticCommits: "enabled",
   semanticCommitType: "chore",
-  semanticCommitScope: "deps",
+  semanticCommitScope: "{{datasource}}",
+
+  automergeType: "pr",
+  platformAutomerge: true,
+
+  branchPrefix: "renovate",
+
+  addLabels: [
+    "bot-renovate",
+  ],
+
+  stopUpdatingLabel: "bot-renovate-stop",
+
+  prConcurrentLimit: 10,
+  prHourlyLimit: 5,
+
+  git-submodules: {
+    enabled: true,
+  },
+
+  lockFileMaintenance: {
+    enabled: true,
+  },
+
+  vulnerabilityAlerts: {
+    enabled: true,
+    addLabels: ["security"],
+  },
 
   packageRules: [
+
+    // =====================================================
+    // Version classification labels
+    // =====================================================
+
+    {
+      matchUpdateTypes: ["major"],
+      addLabels: ["renovate-version-major"],
+      separateMajorMinor: true,
+      separateMultipleMajor: true,
+    },
+    {
+      matchUpdateTypes: ["minor"],
+      addLabels: ["renovate-version-minor"],
+      automerge: true,
+    },
+    {
+      matchUpdateTypes: ["patch"],
+      addLabels: ["renovate-version-patch"],
+      automerge: true,
+    },
+    {
+      matchUpdateTypes: ["digest"],
+      addLabels: ["renovate-version-digest"],
+    },
+
+    // =====================================================
+    // Spring Boot — Maven
+    // =====================================================
+
+    {
+      matchManagers: ["maven"],
+      matchPackageNames: ["org.springframework.boot:spring-boot-starter-parent"],
+      groupName: "spring boot parent",
+      addLabels: ["renovate-type-spring-boot"],
+    },
+
+    {
+      matchManagers: ["maven"],
+      matchPackageNames: ["org.springframework.boot:spring-boot-dependencies"],
+      groupName: "spring boot bom",
+      addLabels: ["renovate-type-spring-boot"],
+    },
+
+    // =====================================================
+    // Spring Boot — Gradle
+    // =====================================================
+
+    {
+      matchManagers: ["gradle"],
+      matchDepTypes: ["plugin"],
+      matchPackageNames: ["org.springframework.boot"],
+      groupName: "spring boot plugin",
+      addLabels: ["renovate-type-spring-boot"],
+    },
+
+    {
+      matchManagers: ["gradle"],
+      matchPackageNames: ["org.springframework.boot:spring-boot-dependencies"],
+      groupName: "spring boot bom",
+      addLabels: ["renovate-type-spring-boot"],
+    },
+
+    // =====================================================
+    // Spring ecosystem grouping (Maven + Gradle)
+    // =====================================================
+
+    {
+      matchManagers: ["maven", "gradle"],
+      matchPackagePrefixes: [
+        "org.springframework",
+        "org.springframework.security"
+      ],
+      groupName: "spring ecosystem",
+      addLabels: ["renovate-type-spring"],
+    },
+
+    // =====================================================
+    // Maven-specific tuning
+    // =====================================================
+
+    {
+      matchManagers: ["maven"],
+      matchDepTypes: ["parent"],
+      groupName: "maven parent",
+    },
+
+    {
+      matchManagers: ["maven"],
+      matchDepTypes: ["import"],
+      groupName: "maven bom",
+    },
+
+    {
+      matchManagers: ["maven"],
+      matchDepTypes: ["plugin"],
+      groupName: "maven plugins",
+      addLabels: ["renovate-type-maven-plugin"],
+    },
+
+    // =====================================================
+    // Gradle-specific tuning
+    // =====================================================
+
+    {
+      matchManagers: ["gradle"],
+      matchDepTypes: ["plugin"],
+      groupName: "gradle plugins",
+      addLabels: ["renovate-type-gradle-plugin"],
+    },
+
+    {
+      matchManagers: ["gradle"],
+      matchDatasources: ["java-version"],
+      groupName: "java runtime",
+      addLabels: ["renovate-type-java"],
+    },
+
+    // =====================================================
+    // Ecosystem classification labels
+    // =====================================================
+
+    {
+      matchDatasources: ["docker"],
+      addLabels: ["renovate-type-container"],
+    },
+
+    {
+      matchDatasources: ["java-version", "maven"],
+      addLabels: ["renovate-type-java"],
+    },
+
+    {
+      matchManagers: ["gradle"],
+      addLabels: ["renovate-type-java"],
+    },
+
+    {
+      matchDatasources: ["node-version", "npm"],
+      addLabels: ["renovate-type-node"],
+    },
+
+    {
+      matchDatasources: ["galaxy", "galaxy-collection"],
+      addLabels: ["renovate-type-ansible"],
+    },
+
+    {
+      matchDatasources: ["github-releases", "github-tags"],
+      addLabels: ["renovate-type-cicd"],
+    },
+
     {
       matchManagers: ["github-actions"],
-      semanticCommitType: "ci",
+      semanticCommitType: "chore",
       semanticCommitScope: "github-actions",
+      addLabels: ["renovate-type-cicd"],
     },
+
+    {
+      matchDatasources: ["pypi"],
+      addLabels: ["renovate-type-python"],
+    },
+
+    {
+      matchManagers: ["gomod"],
+      addLabels: ["renovate-type-go"],
+    },
+
+    // =====================================================
+    // Generic grouping fallback (MUST BE LAST)
+    // =====================================================
+
+    {
+      matchManagers: ["maven", "gradle"],
+      groupName: "{{groupId}} packages",
+      matchPackagePatterns: [".*"],
+    }
   ],
 }
