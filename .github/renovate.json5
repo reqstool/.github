@@ -44,8 +44,9 @@
     // =====================================================
 
     {
+      matchManagers: ["github-actions"],
       matchPackageNames: ["python"],
-      allowedVersions: "<3.14",
+      allowedVersions: "<=3.13",
     },
 
     // =====================================================
