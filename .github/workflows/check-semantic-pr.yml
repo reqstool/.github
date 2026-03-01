@@ -19,15 +19,9 @@ jobs:
             chore
             security
             revert
-          scopes: |
-            reqs
+            test
             docs
-            tests
-            build
+            perf
+            style
             ci
-            conf
-            api
-            core
-            deps
-            release
-            github-actions
+            build

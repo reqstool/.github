@@ -10,19 +10,10 @@ types:
   - security    # security fixes/improvements
   # Best practice additions
   - revert      # reverts a previous commit
-
-scopes:
-  # User-required scopes (domain/functional areas)
-  - reqs        # requirements tracking core logic
-  - docs        # documentation
-  - tests       # test infrastructure
-  - build       # build tooling
-  - ci          # CI/CD pipelines
-  - conf        # configuration
-  # Best practice additions
-  - api         # public API surface
-  - core        # core shared logic
-  - deps        # dependency management
-  - release     # release process
-  # Renovate-generated scopes (must match renovate.json5 semanticCommitScope values)
-  - github-actions  # used by Renovate for GitHub Actions updates: ci(github-actions): ...
+  # Angular/Conventional Commits convention
+  - test        # adding or updating tests
+  - docs        # documentation only
+  - perf        # performance improvement
+  - style       # formatting, whitespace (no logic change)
+  - ci          # CI/CD pipeline changes
+  - build       # build system or tooling changes
