@@ -204,6 +204,9 @@
       semanticCommitType: "chore",
       semanticCommitScope: "github-actions",
       addLabels: ["renovate-type-cicd"],
+      // GitHub Actions use major version tags (v3 → v4) for routine updates;
+      // auto-merge these when all checks pass.
+      automerge: true,
     },
 
     {
