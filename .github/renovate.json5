@@ -48,6 +48,11 @@
       allowedVersions: "<=3.13",
     },
 
+    {
+      matchDepNames: ["java", "openjdk", "temurin"],
+      allowedVersions: "<=21",
+    },
+
     // =====================================================
     // Version classification labels
     // =====================================================
