@@ -116,6 +116,13 @@ git rebase --signoff HEAD~N   # sign N previous commits
 
 ---
 
+## Releasing
+
+See [RELEASING.md](RELEASING.md) for the dependency graph and release order across reqstool
+repositories.
+
+---
+
 ## Code Review
 
 - All PRs require at least **one approving review** from a maintainer before merge.
