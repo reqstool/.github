@@ -1,0 +1,13 @@
+name: Renovate auto-approve (reusable)
+
+on:
+  workflow_call:
+
+jobs:
+  approve:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
