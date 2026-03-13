@@ -1,0 +1,20 @@
+name: Build Docs
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install Antora
+        run: npm i @antora/cli@3.1.14 @antora/site-generator@3.1.14 asciidoctor-kroki@0.18.1
+      - name: Build docs
+        run: npx antora --log-failure-level=warn docs/antora-playbook.yml
