@@ -1,6 +1,11 @@
 name: Build Docs
 on:
   workflow_call:
+    inputs:
+      log-failure-level:
+        description: "Antora log failure level (fatal, error, warn)"
+        type: string
+        default: "fatal"
 
 jobs:
   build:
@@ -17,4 +22,4 @@ jobs:
       - name: Install Antora
         run: npm i @antora/cli@3.1.14 @antora/site-generator@3.1.14 asciidoctor-kroki@0.18.1
       - name: Build docs
-        run: npx antora --log-failure-level=warn docs/antora-playbook.yml
+        run: npx antora --log-failure-level=${{ inputs.log-failure-level }} docs/antora-playbook.yml
