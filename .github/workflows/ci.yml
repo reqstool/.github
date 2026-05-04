@@ -71,6 +71,8 @@ jobs:
             "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
             | tar -xz act
           sudo mv act /usr/local/bin/
+          mkdir -p ~/.config/act
+          echo "-P ubuntu-latest=node:20-bullseye-slim" > ~/.config/act/actrc
 
       - name: Read fixture
         id: fixture
@@ -133,6 +135,8 @@ jobs:
             "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
             | tar -xz act
           sudo mv act /usr/local/bin/
+          mkdir -p ~/.config/act
+          echo "-P ubuntu-latest=node:20-bullseye-slim" > ~/.config/act/actrc
 
       - name: Run release dry-run (semver)
         run: |
@@ -157,6 +161,8 @@ jobs:
             "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
             | tar -xz act
           sudo mv act /usr/local/bin/
+          mkdir -p ~/.config/act
+          echo "-P ubuntu-latest=node:20-bullseye-slim" > ~/.config/act/actrc
 
       - name: Run release-preview
         run: |
