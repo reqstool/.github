@@ -1,0 +1,26 @@
+name: Lint (TypeScript)
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node.js version to use."
+        required: false
+        type: string
+        default: "24"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run format

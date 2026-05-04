@@ -1,0 +1,14 @@
+name: Test — java/lint
+
+on:
+  workflow_call:
+
+# Tests for .github/workflows/java/lint.yml
+# Requires a pom.xml in the calling repo — exercised via act in repos that have one.
+# In ci.yml this test is validated by actionlint only (no act execution).
+
+jobs:
+  lint:
+    uses: ./.github/workflows/java/lint.yml
+    with:
+      java-version: "21"

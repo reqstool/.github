@@ -1,0 +1,49 @@
+name: Build (Python / Hatch)
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version to use."
+        required: false
+        type: string
+        default: "3.13"
+      coverage-source:
+        description: "Package name passed to --cov=<name>. Empty = run tests without coverage."
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - run: pip install hatch
+
+      - name: Run tests (with coverage)
+        if: ${{ inputs.coverage-source != '' }}
+        run: |
+          hatch run dev:pytest \
+            --junitxml=build/junit.xml \
+            --cov=${{ inputs.coverage-source }} \
+            --cov-report=xml:build/coverage.xml
+
+      - name: Run tests (without coverage)
+        if: ${{ inputs.coverage-source == '' }}
+        run: hatch run dev:pytest --junitxml=build/junit.xml
+
+      - name: Build
+        run: hatch build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
