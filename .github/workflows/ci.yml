@@ -10,6 +10,9 @@ on:
       - ".github/workflows/**"
       - "tests/**"
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint workflows
