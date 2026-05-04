@@ -14,10 +14,10 @@ jobs:
     steps:
       - name: Check ref is a tag
         run: |
-          if [[ "${{ github.ref }}" != refs/tags/* ]]; then
-            echo "::error::Expected a tag ref (refs/tags/...) but got: ${{ github.ref }}"
-            exit 1
-          fi
+          case "${{ github.ref }}" in
+            refs/tags/*) ;;
+            *) echo "::error::Expected a tag ref (refs/tags/...) but got: ${{ github.ref }}"; exit 1 ;;
+          esac
 
       - name: Validate tag format (${{ inputs.version-format }})
         run: |

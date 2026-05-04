@@ -109,23 +109,27 @@ jobs:
             --notes-file NOTES.md \
             --draft \
             --json url -q .url)
-          echo "### Release draft created" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Version:** \`${{ inputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Draft URL:** $DRAFT_URL" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Review the draft and click **Publish release** to trigger the publish workflows." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Release draft created"
+            echo ""
+            echo "**Version:** \`${{ inputs.version }}\`"
+            echo ""
+            echo "**Draft URL:** $DRAFT_URL"
+            echo ""
+            echo "Review the draft and click **Publish release** to trigger the publish workflows."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Dry-run summary
         if: ${{ inputs.dry-run }}
         run: |
-          echo "### Release dry-run" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Version:** \`${{ inputs.version }}\`  " >> "$GITHUB_STEP_SUMMARY"
-          echo "**Format:** \`${{ inputs.version-format }}\`  " >> "$GITHUB_STEP_SUMMARY"
-          echo "**Mode:** dry-run — no tag pushed, no release created." >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "#### Generated release notes" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          cat NOTES.md >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Release dry-run"
+            echo ""
+            echo "**Version:** \`${{ inputs.version }}\`  "
+            echo "**Format:** \`${{ inputs.version-format }}\`  "
+            echo "**Mode:** dry-run — no tag pushed, no release created."
+            echo ""
+            echo "#### Generated release notes"
+            echo ""
+            cat NOTES.md
+          } >> "$GITHUB_STEP_SUMMARY"

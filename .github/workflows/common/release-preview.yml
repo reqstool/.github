@@ -78,9 +78,11 @@ jobs:
           else
             COMMITS=$(git log "${LATEST}..HEAD" --format="- %h %s")
           fi
-          echo "COMMITS<<EOF" >> "$GITHUB_ENV"
-          echo "$COMMITS" >> "$GITHUB_ENV"
-          echo "EOF" >> "$GITHUB_ENV"
+          {
+            echo "COMMITS<<EOF"
+            echo "$COMMITS"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Get build-tool version
         id: build-version

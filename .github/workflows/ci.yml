@@ -80,10 +80,12 @@ jobs:
           GITHUB_REF=$(jq -r '.github_ref' "$FIXTURE")
           VERSION_FORMAT=$(jq -r '.inputs["version-format"]' "$FIXTURE")
           TARGET_COMMITISH=$(jq -r '.event.release.target_commitish' "$FIXTURE")
-          echo "expected=$EXPECTED" >> "$GITHUB_OUTPUT"
-          echo "github_ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"
-          echo "version_format=$VERSION_FORMAT" >> "$GITHUB_OUTPUT"
-          echo "target_commitish=$TARGET_COMMITISH" >> "$GITHUB_OUTPUT"
+          {
+            echo "expected=$EXPECTED"
+            echo "github_ref=$GITHUB_REF"
+            echo "version_format=$VERSION_FORMAT"
+            echo "target_commitish=$TARGET_COMMITISH"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build event payload
         run: |
