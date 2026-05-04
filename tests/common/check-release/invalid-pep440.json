@@ -1,0 +1,7 @@
+{
+  "_comment": "PEP 440 tag with v prefix (forbidden) — expect exit 1",
+  "expected_exit": 1,
+  "github_ref": "refs/tags/v1.2.3",
+  "inputs": { "version-format": "pep440" },
+  "event": { "release": { "target_commitish": "main" } }
+}

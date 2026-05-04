@@ -1,0 +1,15 @@
+name: Test — common/release-preview
+
+on:
+  workflow_call:
+
+# Tests for .github/workflows/common/release-preview.yml
+# The workflow is read-only, so we just confirm it completes successfully.
+
+jobs:
+  preview:
+    uses: ./.github/workflows/common/release-preview.yml
+    with:
+      version-command: ""
+    permissions:
+      contents: read

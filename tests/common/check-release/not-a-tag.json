@@ -1,0 +1,7 @@
+{
+  "_comment": "Branch ref, not a tag — expect exit 1",
+  "expected_exit": 1,
+  "github_ref": "refs/heads/main",
+  "inputs": { "version-format": "semver" },
+  "event": { "release": { "target_commitish": "main" } }
+}

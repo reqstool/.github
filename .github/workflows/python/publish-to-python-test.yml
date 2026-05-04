@@ -1,0 +1,39 @@
+name: Publish to Test PyPI
+
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Run twine check instead of uploading to Test PyPI."
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: https://test.pypi.org
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Dry-run — validate artifacts
+        if: ${{ inputs.dry-run }}
+        run: |
+          pip install --quiet twine
+          twine check dist/*
+
+      - name: Publish to Test PyPI
+        if: ${{ !inputs.dry-run }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          attestations: true
+          skip-existing: true

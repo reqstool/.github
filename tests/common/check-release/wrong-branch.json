@@ -1,0 +1,7 @@
+{
+  "_comment": "Valid tag but release targets a disallowed branch — expect exit 1",
+  "expected_exit": 1,
+  "github_ref": "refs/tags/1.2.3",
+  "inputs": { "version-format": "semver" },
+  "event": { "release": { "target_commitish": "develop" } }
+}

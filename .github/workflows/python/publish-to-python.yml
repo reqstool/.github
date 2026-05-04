@@ -1,0 +1,42 @@
+name: Publish to PyPI
+
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Run twine check instead of uploading to PyPI."
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: "GitHub environment to deploy to."
+        required: false
+        type: string
+        default: "prod"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://pypi.org
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Dry-run — validate artifacts
+        if: ${{ inputs.dry-run }}
+        run: |
+          pip install --quiet twine
+          twine check dist/*
+
+      - name: Publish to PyPI
+        if: ${{ !inputs.dry-run }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true

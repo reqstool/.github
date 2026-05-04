@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "tests/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "tests/**"
+
+jobs:
+  lint:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install actionlint
+        run: |
+          VERSION="1.7.7"
+          curl -fsSL \
+            "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz" \
+            | tar -xz actionlint
+          sudo mv actionlint /usr/local/bin/
+
+      - name: Install zizmor
+        run: pip install zizmor
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: actionlint
+        run: actionlint .github/workflows/**/*.yml .github/workflows/*.yml
+
+      - name: zizmor
+        run: zizmor --format sarif .github/workflows/ > zizmor.sarif || true
+
+      - name: yamllint
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: {max: 200}}}" \
+            .github/workflows/
+
+  test-check-release:
+    name: Test — common/check-release
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          - valid-semver
+          - invalid-semver
+          - valid-pep440
+          - invalid-pep440
+          - valid-maven
+          - not-a-tag
+          - wrong-branch
+          - hotfix-branch
+          - release-branch
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install act
+        run: |
+          VERSION="0.2.74"
+          curl -fsSL \
+            "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
+            | tar -xz act
+          sudo mv act /usr/local/bin/
+
+      - name: Read fixture
+        id: fixture
+        run: |
+          FIXTURE="tests/common/check-release/${{ matrix.fixture }}.json"
+          EXPECTED=$(jq -r '.expected_exit' "$FIXTURE")
+          GITHUB_REF=$(jq -r '.github_ref' "$FIXTURE")
+          VERSION_FORMAT=$(jq -r '.inputs["version-format"]' "$FIXTURE")
+          TARGET_COMMITISH=$(jq -r '.event.release.target_commitish' "$FIXTURE")
+          echo "expected=$EXPECTED" >> "$GITHUB_OUTPUT"
+          echo "github_ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"
+          echo "version_format=$VERSION_FORMAT" >> "$GITHUB_OUTPUT"
+          echo "target_commitish=$TARGET_COMMITISH" >> "$GITHUB_OUTPUT"
+
+      - name: Build event payload
+        run: |
+          jq -n \
+            --arg commitish "${{ steps.fixture.outputs.target_commitish }}" \
+            '{"release": {"target_commitish": $commitish}}' \
+            > /tmp/event.json
+
+      - name: Run act
+        id: act
+        continue-on-error: true
+        run: |
+          act workflow_call \
+            -W .github/workflows/common/check-release.yml \
+            --eventpath /tmp/event.json \
+            --env "GITHUB_REF=${{ steps.fixture.outputs.github_ref }}" \
+            --env "GITHUB_REF_NAME=$(echo '${{ steps.fixture.outputs.github_ref }}' | sed 's|refs/tags/||;s|refs/heads/||')" \
+            --input "version-format=${{ steps.fixture.outputs.version_format }}" \
+            --no-cache-server \
+            -q
+
+      - name: Assert outcome
+        run: |
+          ACT_EXIT=${{ steps.act.outcome == 'success' && '0' || '1' }}
+          EXPECTED="${{ steps.fixture.outputs.expected }}"
+          if [ "$ACT_EXIT" != "$EXPECTED" ]; then
+            echo "::error::Fixture '${{ matrix.fixture }}': expected exit $EXPECTED but got $ACT_EXIT"
+            exit 1
+          fi
+          echo "Fixture '${{ matrix.fixture }}': exit $ACT_EXIT — PASS"
+
+  test-release-dry-run:
+    name: Test — common/release (dry-run)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install act
+        run: |
+          VERSION="0.2.74"
+          curl -fsSL \
+            "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
+            | tar -xz act
+          sudo mv act /usr/local/bin/
+
+      - name: Run release dry-run (semver)
+        run: |
+          act workflow_call \
+            -W tests/common/release.yml \
+            --no-cache-server \
+            -q
+
+  test-release-preview:
+    name: Test — common/release-preview
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install act
+        run: |
+          VERSION="0.2.74"
+          curl -fsSL \
+            "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
+            | tar -xz act
+          sudo mv act /usr/local/bin/
+
+      - name: Run release-preview
+        run: |
+          act workflow_call \
+            -W tests/common/release-preview.yml \
+            --no-cache-server \
+            -q

@@ -1,0 +1,36 @@
+name: Test — common/release
+
+on:
+  workflow_call:
+
+# Dry-run tests for .github/workflows/common/release.yml.
+# No tag is pushed and no draft release is created.
+# Failure-path tests (invalid version format) are exercised by ci.yml via act.
+
+jobs:
+  dry-run-semver:
+    uses: ./.github/workflows/common/release.yml
+    with:
+      version: "1.2.3"
+      version-format: semver
+      dry-run: true
+    permissions:
+      contents: write
+
+  dry-run-pep440:
+    uses: ./.github/workflows/common/release.yml
+    with:
+      version: "1.2.3rc1"
+      version-format: pep440
+      dry-run: true
+    permissions:
+      contents: write
+
+  dry-run-maven:
+    uses: ./.github/workflows/common/release.yml
+    with:
+      version: "1.2.3"
+      version-format: maven
+      dry-run: true
+    permissions:
+      contents: write

@@ -1,0 +1,69 @@
+name: Publish VS Code Extension
+
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Validate packaging without uploading to the registry."
+        required: false
+        type: boolean
+        default: false
+      dependency-version:
+        description: "Version of a bundled external tool to pin (e.g. a CLI version). Empty = use package.json default."
+        required: false
+        type: string
+        default: ""
+      dependency-name:
+        description: "The npm package.json key that holds the bundled tool's version (e.g. reqstoolVersion)."
+        required: false
+        type: string
+        default: ""
+    secrets:
+      OPEN_VSX_TOKEN:
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      - name: Pin dependency version
+        if: ${{ inputs.dependency-version != '' && inputs.dependency-name != '' }}
+        run: npm pkg set "${{ inputs.dependency-name }}=${{ inputs.dependency-version }}"
+
+      - name: Log effective dependency version
+        if: ${{ inputs.dependency-name != '' }}
+        run: |
+          VERSION=$(node -p "require('./package.json')['${{ inputs.dependency-name }}'] || '(not set)'")
+          echo "${{ inputs.dependency-name }}: $VERSION"
+
+      - name: Build VSIX
+        run: npm run build
+
+      - name: Get VSIX path
+        id: vsix
+        run: echo "path=$(ls *.vsix | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Open VSX Registry
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.OPEN_VSX_TOKEN }}
+          extensionFile: ${{ steps.vsix.outputs.path }}
+          dryRun: ${{ inputs.dry-run }}
+
+      - name: Upload VSIX to GitHub Release
+        if: ${{ !inputs.dry-run && github.event_name == 'release' }}
+        run: gh release upload "${{ github.ref_name }}" "${{ steps.vsix.outputs.path }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

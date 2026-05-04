@@ -1,0 +1,7 @@
+{
+  "_comment": "Valid Maven version tag on main — expect exit 0",
+  "expected_exit": 0,
+  "github_ref": "refs/tags/1.2.3",
+  "inputs": { "version-format": "maven" },
+  "event": { "release": { "target_commitish": "main" } }
+}

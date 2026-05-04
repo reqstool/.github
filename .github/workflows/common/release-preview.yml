@@ -1,0 +1,133 @@
+name: Release Preview
+
+on:
+  workflow_call:
+    inputs:
+      cliff-config:
+        description: "Path to cliff.toml in calling repo. Empty = use org default."
+        required: false
+        type: string
+        default: ""
+      version-command:
+        description: >
+          Shell command that prints the current build-tool version to stdout.
+          Used to cross-check against git-cliff's computed next version.
+          Examples:
+            Python/hatch: hatch version
+            Python/poetry: poetry version --short
+            Maven: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+            npm: node -p "require('./package.json').version"
+            Gradle: ./gradlew properties -q | grep '^version:' | awk '{print $2}'
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up cliff.toml
+        run: |
+          CONFIG="${{ inputs.cliff-config }}"
+          if [ -n "$CONFIG" ] && [ -f "$CONFIG" ]; then
+            cp "$CONFIG" /tmp/cliff.toml
+          elif [ -f "cliff.toml" ]; then
+            cp cliff.toml /tmp/cliff.toml
+          else
+            curl -fsSL \
+              "https://raw.githubusercontent.com/reqstool/.github/main/.github/cliff.toml" \
+              -o /tmp/cliff.toml
+          fi
+
+      - name: Get latest tag
+        id: latest
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "(no tags yet)")
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Compute next version via git-cliff
+        id: next
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: /tmp/cliff.toml
+          args: --bumped-version
+        env:
+          OUTPUT: /dev/null
+
+      - name: Generate draft release notes
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: /tmp/cliff.toml
+          args: --latest --unreleased --strip all
+        env:
+          OUTPUT: NOTES.md
+
+      - name: List commits since latest tag
+        id: commits
+        run: |
+          LATEST="${{ steps.latest.outputs.tag }}"
+          if [ "$LATEST" = "(no tags yet)" ]; then
+            COMMITS=$(git log --format="- %h %s" | head -20)
+          else
+            COMMITS=$(git log "${LATEST}..HEAD" --format="- %h %s")
+          fi
+          echo "COMMITS<<EOF" >> "$GITHUB_ENV"
+          echo "$COMMITS" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Get build-tool version
+        id: build-version
+        if: ${{ inputs.version-command != '' }}
+        run: |
+          BUILD_VERSION=$(eval "${{ inputs.version-command }}" 2>/dev/null || echo "(error)")
+          echo "version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Compare versions
+        id: compare
+        if: ${{ inputs.version-command != '' }}
+        run: |
+          NEXT="${{ steps.next.outputs.version }}"
+          BUILD="${{ steps.build-version.outputs.version }}"
+          BASE=$(echo "$BUILD" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+          if [ -n "$BASE" ] && [ "$BASE" != "$NEXT" ]; then
+            echo "mismatch=true" >> "$GITHUB_OUTPUT"
+            echo "message=⚠️ Mismatch: git-cliff suggests \`$NEXT\` but build tool reports \`$BUILD\`" >> "$GITHUB_OUTPUT"
+          else
+            echo "mismatch=false" >> "$GITHUB_OUTPUT"
+            echo "message=✅ \`$BUILD\`" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write job summary
+        run: |
+          LATEST="${{ steps.latest.outputs.tag }}"
+          NEXT="${{ steps.next.outputs.version }}"
+          REPO="${{ github.server_url }}/${{ github.repository }}"
+
+          {
+            echo "## Release Preview"
+            echo ""
+            echo "| | Value |"
+            echo "|---|---|"
+            echo "| Latest tag | \`${LATEST}\` |"
+            echo "| Next version (git-cliff) | \`${NEXT}\` |"
+            if [ -n "${{ steps.compare.outputs.message }}" ]; then
+              echo "| Build tool version | ${{ steps.compare.outputs.message }} |"
+            fi
+            echo ""
+            echo "### Commits since \`${LATEST}\`"
+            echo ""
+            echo "$COMMITS"
+            echo ""
+            echo "### Draft release notes"
+            echo ""
+            cat NOTES.md
+            echo ""
+            echo "[→ GitHub Releases page](${REPO}/releases)"
+          } >> "$GITHUB_STEP_SUMMARY"
