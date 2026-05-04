@@ -121,54 +121,8 @@ jobs:
           fi
           echo "Fixture '${{ matrix.fixture }}': exit $ACT_EXIT — PASS"
 
-  test-release-dry-run:
-    name: Test — common/release (dry-run)
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install act
-        run: |
-          VERSION="0.2.74"
-          curl -fsSL \
-            "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
-            | tar -xz act
-          sudo mv act /usr/local/bin/
-          mkdir -p ~/.config/act
-          echo "-P ubuntu-latest=node:20-bullseye-slim" > ~/.config/act/actrc
-
-      - name: Run release dry-run (semver)
-        run: |
-          act workflow_call \
-            -W tests/common/release.yml \
-            --no-cache-server \
-            -q
-
-  test-release-preview:
-    name: Test — common/release-preview
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install act
-        run: |
-          VERSION="0.2.74"
-          curl -fsSL \
-            "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
-            | tar -xz act
-          sudo mv act /usr/local/bin/
-          mkdir -p ~/.config/act
-          echo "-P ubuntu-latest=node:20-bullseye-slim" > ~/.config/act/actrc
-
-      - name: Run release-preview
-        run: |
-          act workflow_call \
-            -W tests/common/release-preview.yml \
-            --no-cache-server \
-            -q
+  # tests/common/release.yml and tests/common/release-preview.yml are validated
+  # by actionlint above. act-based execution is skipped here because act does not
+  # propagate with: inputs into nested workflow_call, and release-preview requires
+  # curl which is absent from the micro image. Both workflows are exercised
+  # end-to-end in the per-repo migration PRs.
