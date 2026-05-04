@@ -93,19 +93,21 @@ jobs:
         run: |
           jq -n \
             --arg commitish "${{ steps.fixture.outputs.target_commitish }}" \
-            '{"release": {"target_commitish": $commitish}}' \
+            --arg fmt "${{ steps.fixture.outputs.version_format }}" \
+            '{"release": {"target_commitish": $commitish}, "inputs": {"version-format": $fmt}}' \
             > /tmp/event.json
 
       - name: Run act
         id: act
         continue-on-error: true
         run: |
+          REF="${{ steps.fixture.outputs.github_ref }}"
+          REF_NAME=$(echo "$REF" | sed 's|refs/tags/||;s|refs/heads/||')
           act workflow_call \
             -W .github/workflows/common/check-release.yml \
             --eventpath /tmp/event.json \
-            --env "GITHUB_REF=${{ steps.fixture.outputs.github_ref }}" \
-            --env "GITHUB_REF_NAME=$(echo '${{ steps.fixture.outputs.github_ref }}' | sed 's|refs/tags/||;s|refs/heads/||')" \
-            --input "version-format=${{ steps.fixture.outputs.version_format }}" \
+            --env "GITHUB_REF=$REF" \
+            --env "GITHUB_REF_NAME=$REF_NAME" \
             --no-cache-server \
             -q
 
