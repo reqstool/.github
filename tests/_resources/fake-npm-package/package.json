@@ -1,0 +1,10 @@
+{
+  "name": "@reqstool/test-package",
+  "version": "0.0.1",
+  "description": "Minimal package for workflow dry-run tests",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "mkdir -p dist && echo 'exports={};' > dist/index.js"
+  },
+  "license": "Apache-2.0"
+}

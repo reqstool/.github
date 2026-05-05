@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version string to release (no v prefix)"
+        required: true
+        type: string
+      version-format:
+        description: "Version format: semver | pep440 | maven"
+        required: true
+        type: string
+      cliff-config:
+        description: "Path to cliff.toml in the calling repo. Empty = use org default."
+        required: false
+        type: string
+        default: ""
+      dry-run:
+        description: "Validate and preview only — no tag push, no draft release created."
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate version format (${{ inputs.version-format }})
+        run: |
+          VERSION="${{ inputs.version }}"
+          FORMAT="${{ inputs.version-format }}"
+
+          case "$FORMAT" in
+            semver)
+              if ! npx --yes semver "$VERSION" > /dev/null 2>&1; then
+                echo "::error::Version '$VERSION' is not valid npm semver (expected X.Y.Z or X.Y.Z-pre.N)"
+                exit 1
+              fi
+              ;;
+            pep440)
+              if ! echo "$VERSION" | grep -qE '^[0-9]+(\.[0-9]+)*(a[0-9]+|b[0-9]+|rc[0-9]+)?(\.post[0-9]+)?(\.dev[0-9]+)?$'; then
+                echo "::error::Version '$VERSION' is not a valid PEP 440 version (e.g. 1.2.3, 1.2.3rc1)"
+                exit 1
+              fi
+              ;;
+            maven)
+              if ! echo "$VERSION" | grep -qE '^[0-9]+(\.[0-9]+)*(-[A-Za-z0-9._-]+)?$'; then
+                echo "::error::Version '$VERSION' is not a valid Maven version (e.g. 1.2.3, 1.2.3-RELEASE)"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unknown version-format '$FORMAT'."
+              exit 1
+              ;;
+          esac
+
+      - name: Check tag does not already exist
+        run: |
+          if git rev-parse "${{ inputs.version }}" > /dev/null 2>&1; then
+            echo "::error::Tag '${{ inputs.version }}' already exists"
+            exit 1
+          fi
+
+      - name: Set up cliff.toml
+        run: |
+          CONFIG="${{ inputs.cliff-config }}"
+          if [ -n "$CONFIG" ] && [ -f "$CONFIG" ]; then
+            cp "$CONFIG" /tmp/cliff.toml
+          elif [ -f "cliff.toml" ]; then
+            cp cliff.toml /tmp/cliff.toml
+          else
+            curl -fsSL \
+              "https://raw.githubusercontent.com/reqstool/.github/main/.github/cliff.toml" \
+              -o /tmp/cliff.toml
+          fi
+
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: /tmp/cliff.toml
+          args: --latest --unreleased --strip all
+        env:
+          OUTPUT: NOTES.md
+
+      - name: Push tag
+        if: ${{ !inputs.dry-run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ inputs.version }}"
+          git push origin "${{ inputs.version }}"
+
+      - name: Create draft GitHub Release
+        if: ${{ !inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DRAFT_URL=$(gh release create "${{ inputs.version }}" \
+            --title "${{ inputs.version }}" \
+            --notes-file NOTES.md \
+            --draft \
+            --json url -q .url)
+          {
+            echo "### Release draft created"
+            echo ""
+            echo "**Version:** \`${{ inputs.version }}\`"
+            echo ""
+            echo "**Draft URL:** $DRAFT_URL"
+            echo ""
+            echo "Review the draft and click **Publish release** to trigger the publish workflows."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry-run summary
+        if: ${{ inputs.dry-run }}
+        run: |
+          {
+            echo "### Release dry-run"
+            echo ""
+            echo "**Version:** \`${{ inputs.version }}\`  "
+            echo "**Format:** \`${{ inputs.version-format }}\`  "
+            echo "**Mode:** dry-run — no tag pushed, no release created."
+            echo ""
+            echo "#### Generated release notes"
+            echo ""
+            cat NOTES.md
+          } >> "$GITHUB_STEP_SUMMARY"

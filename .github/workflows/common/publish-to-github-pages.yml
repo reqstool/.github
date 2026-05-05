@@ -1,0 +1,52 @@
+name: Publish to GitHub Pages
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node.js version to use for Antora."
+        required: false
+        type: string
+        default: "24"
+      antora-playbook:
+        description: "Path to the Antora playbook file."
+        required: false
+        type: string
+        default: "docs/antora-playbook.yml"
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install Antora
+        run: npm i antora asciidoctor asciidoctor-kroki
+
+      - name: Build site
+        run: npx antora ${{ inputs.antora-playbook }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/build/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

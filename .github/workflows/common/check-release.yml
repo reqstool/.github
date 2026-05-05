@@ -1,0 +1,58 @@
+name: Check Release
+
+on:
+  workflow_call:
+    inputs:
+      version-format:
+        description: "Version format to validate: semver | pep440 | maven"
+        required: true
+        type: string
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check ref is a tag
+        run: |
+          case "${{ github.ref }}" in
+            refs/tags/*) ;;
+            *) echo "::error::Expected a tag ref (refs/tags/...) but got: ${{ github.ref }}"; exit 1 ;;
+          esac
+
+      - name: Validate tag format (${{ inputs.version-format }})
+        run: |
+          TAG="${{ github.ref_name }}"
+          FORMAT="${{ inputs.version-format }}"
+
+          case "$FORMAT" in
+            semver)
+              if ! npx --yes semver "$TAG" > /dev/null 2>&1; then
+                echo "::error::Tag '$TAG' is not valid npm semver (expected X.Y.Z or X.Y.Z-pre.N, no v prefix)"
+                exit 1
+              fi
+              ;;
+            pep440)
+              if ! echo "$TAG" | grep -qE '^[0-9]+(\.[0-9]+)*(a[0-9]+|b[0-9]+|rc[0-9]+)?(\.post[0-9]+)?(\.dev[0-9]+)?$'; then
+                echo "::error::Tag '$TAG' is not a valid PEP 440 version (e.g. 1.2.3, 1.2.3rc1, 1.2.3.post1 — no v prefix)"
+                exit 1
+              fi
+              ;;
+            maven)
+              if ! echo "$TAG" | grep -qE '^[0-9]+(\.[0-9]+)*(-[A-Za-z0-9._-]+)?$'; then
+                echo "::error::Tag '$TAG' is not a valid Maven version (e.g. 1.2.3, 1.2.3-RELEASE — no v prefix)"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unknown version-format '$FORMAT'. Must be semver, pep440, or maven."
+              exit 1
+              ;;
+          esac
+
+      - name: Check release branch
+        run: |
+          BRANCH="${{ github.event.release.target_commitish }}"
+          if [[ "$BRANCH" != "main" && "$BRANCH" != hotfix/* && "$BRANCH" != release/* ]]; then
+            echo "::error::Release must target main, hotfix/*, or release/* (got: '$BRANCH')"
+            exit 1
+          fi

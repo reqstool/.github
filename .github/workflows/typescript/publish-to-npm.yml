@@ -1,0 +1,44 @@
+name: Publish to npm
+
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Run npm publish --dry-run. No NPM_TOKEN needed."
+        required: false
+        type: boolean
+        default: false
+      scope:
+        description: "npm scope (with @, e.g. @reqstool)."
+        required: false
+        type: string
+        default: "@reqstool"
+      access:
+        description: "npm publish access level."
+        required: false
+        type: string
+        default: "public"
+    secrets:
+      NPM_TOKEN:
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          scope: ${{ inputs.scope }}
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Publish
+        run: npm publish --access ${{ inputs.access }}${{ inputs.dry-run && ' --dry-run' || '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

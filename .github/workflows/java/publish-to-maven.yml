@@ -1,0 +1,64 @@
+name: Publish to Maven Central
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: "Java version to use."
+        required: false
+        type: string
+        default: "21"
+      dry-run:
+        description: "Build without deploying (mvn package -DskipTests). No GPG or token needed."
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      MAVEN_CENTRAL_USERNAME:
+        required: false
+      MAVEN_CENTRAL_TOKEN:
+        required: false
+      REQSTOOL_PRIVATE_GPG_KEY:
+        required: false
+      REQSTOOL_PRIVATE_GPG_PASSPHRASE:
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java (dry-run)
+        if: ${{ inputs.dry-run }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+
+      - name: Set up Java (publish)
+        if: ${{ !inputs.dry-run }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.REQSTOOL_PRIVATE_GPG_KEY }}
+          gpg-passphrase: REQSTOOL_PRIVATE_GPG_PASSPHRASE
+
+      - name: Dry-run build
+        if: ${{ inputs.dry-run }}
+        run: mvn clean package -DskipTests
+
+      - name: Publish to Maven Central
+        if: ${{ !inputs.dry-run }}
+        run: mvn clean deploy
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+          REQSTOOL_PRIVATE_GPG_PASSPHRASE: ${{ secrets.REQSTOOL_PRIVATE_GPG_PASSPHRASE }}

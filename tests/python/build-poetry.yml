@@ -1,0 +1,14 @@
+name: Test — python/build-poetry
+
+on:
+  workflow_call:
+
+# Tests for .github/workflows/python/build-poetry.yml
+# Requires pyproject.toml configured for Poetry — validated by actionlint only in ci.yml.
+
+jobs:
+  build:
+    uses: ./.github/workflows/python/build-poetry.yml
+    with:
+      coverage-source: ""
+      install-self-as-plugin: false

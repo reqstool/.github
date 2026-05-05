@@ -1,0 +1,16 @@
+name: Test — common/publish-to-github-pages
+
+on:
+  workflow_call:
+
+# Tests for .github/workflows/common/publish-to-github-pages.yml
+# Requires docs/antora-playbook.yml and a configured GitHub Pages environment.
+# Validated by actionlint only in ci.yml (no act execution — requires Pages environment).
+
+jobs:
+  publish:
+    uses: ./.github/workflows/common/publish-to-github-pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

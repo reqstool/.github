@@ -1,0 +1,64 @@
+name: Publish via Gradle
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "Publish target: portal (Gradle Plugin Portal) or central (Maven Central / Sonatype)."
+        required: true
+        type: string
+      java-version:
+        description: "Java version to use."
+        required: false
+        type: string
+        default: "21"
+      dry-run:
+        description: "Build without publishing (./gradlew build -x test). No credentials needed."
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      GRADLE_PUBLISH_KEY:
+        required: false
+      GRADLE_PUBLISH_SECRET:
+        required: false
+      REQSTOOL_PRIVATE_GPG_KEY:
+        required: false
+      REQSTOOL_PRIVATE_GPG_PASSPHRASE:
+        required: false
+      OSSRH_USERNAME:
+        required: false
+      OSSRH_TOKEN:
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+
+      - name: Dry-run build
+        if: ${{ inputs.dry-run }}
+        run: ./gradlew build -x test
+
+      - name: Publish to Gradle Plugin Portal
+        if: ${{ !inputs.dry-run && inputs.target == 'portal' }}
+        run: ./gradlew publishPlugins
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+
+      - name: Publish to Maven Central (Sonatype)
+        if: ${{ !inputs.dry-run && inputs.target == 'central' }}
+        run: ./gradlew publish
+        env:
+          REQSTOOL_PRIVATE_GPG_KEY: ${{ secrets.REQSTOOL_PRIVATE_GPG_KEY }}
+          REQSTOOL_PRIVATE_GPG_PASSPHRASE: ${{ secrets.REQSTOOL_PRIVATE_GPG_PASSPHRASE }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}

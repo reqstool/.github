@@ -1,0 +1,56 @@
+name: Lint (Python)
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version to use."
+        required: false
+        type: string
+        default: "3.13"
+      package-manager:
+        description: "Package manager: hatch or poetry."
+        required: false
+        type: string
+        default: "hatch"
+      poetry-version:
+        description: "Poetry version (only used when package-manager is poetry)."
+        required: false
+        type: string
+        default: "2.1.0"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install hatch and lint
+        if: ${{ inputs.package-manager == 'hatch' }}
+        run: |
+          pip install hatch
+          hatch run dev:black --check --verbose src tests
+          hatch run dev:flake8
+
+      - name: Install Poetry
+        if: ${{ inputs.package-manager == 'poetry' }}
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ inputs.poetry-version }}
+          virtualenvs-create: true
+
+      - name: Install poetry-dynamic-versioning and dependencies
+        if: ${{ inputs.package-manager == 'poetry' }}
+        run: |
+          poetry self add "poetry-dynamic-versioning[plugin]"
+          poetry install --with dev
+
+      - name: Lint with Poetry
+        if: ${{ inputs.package-manager == 'poetry' }}
+        run: |
+          poetry run black --check --verbose src tests
+          poetry run flake8

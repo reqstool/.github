@@ -1,0 +1,13 @@
+name: Test — java/build-gradle
+
+on:
+  workflow_call:
+
+# Tests for .github/workflows/java/build-gradle.yml
+# Requires build.gradle — validated by actionlint only in ci.yml (no act execution).
+
+jobs:
+  build:
+    uses: ./.github/workflows/java/build-gradle.yml
+    with:
+      java-version: "21"

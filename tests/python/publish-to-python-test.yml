@@ -1,0 +1,15 @@
+name: Test — python/publish-to-python-test
+
+on:
+  workflow_call:
+
+# Tests for .github/workflows/python/publish-to-python-test.yml
+# Uses dry-run mode (twine check) with fake dist artifacts from tests/_resources/fake-python-dist/.
+
+jobs:
+  dry-run:
+    uses: ./.github/workflows/python/publish-to-python-test.yml
+    with:
+      dry-run: true
+    permissions:
+      id-token: write
