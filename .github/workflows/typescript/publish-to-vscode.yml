@@ -19,10 +19,10 @@ on:
         type: string
         default: ""
       registries:
-        description: "Which registries to publish to: 'both' (default), 'open-vsx', or 'vscode-marketplace'."
+        description: "Comma-separated list of registries to publish to. Valid values: 'open-vsx', 'vscode-marketplace'. Default: both."
         required: false
         type: string
-        default: "both"
+        default: "open-vsx,vscode-marketplace"
     secrets:
       OPEN_VSX_TOKEN:
         required: false
@@ -63,7 +63,7 @@ jobs:
         run: echo "path=$(find . -maxdepth 1 -name '*.vsix' | head -1)" >> "$GITHUB_OUTPUT"
 
       - name: Publish to Open VSX Registry
-        if: ${{ inputs.registries == 'both' || inputs.registries == 'open-vsx' }}
+        if: ${{ contains(inputs.registries, 'open-vsx') }}
         uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
           dryRun: ${{ inputs.dry-run }}
 
       - name: Publish to VS Code Marketplace
-        if: ${{ inputs.registries == 'both' || inputs.registries == 'vscode-marketplace' }}
+        if: ${{ contains(inputs.registries, 'vscode-marketplace') }}
         uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.VSCE_PAT }}
