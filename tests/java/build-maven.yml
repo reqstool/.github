@@ -1,13 +1,13 @@
-name: Test — java/build-maven
+name: Test — java-build-maven
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/java/build-maven.yml
+# Tests for .github/workflows/java-build-maven.yml
 # Requires a pom.xml — validated by actionlint only in ci.yml (no act execution).
 
 jobs:
   build:
-    uses: ./.github/workflows/java/build-maven.yml
+    uses: ./.github/workflows/java-build-maven.yml
     with:
       java-version: "21"

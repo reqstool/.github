@@ -1,15 +1,15 @@
-name: Test — typescript/publish-to-vscode
+name: Test — typescript-publish-to-vscode
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/typescript/publish-to-vscode.yml
+# Tests for .github/workflows/typescript-publish-to-vscode.yml
 # Dry-run uses HaaLeo dryRun: true (no registry upload, OPEN_VSX_TOKEN not required).
 # Requires an npm project with a vsce build script in the calling repo.
 
 jobs:
   dry-run:
-    uses: ./.github/workflows/typescript/publish-to-vscode.yml
+    uses: ./.github/workflows/typescript-publish-to-vscode.yml
     with:
       dry-run: true
     permissions:

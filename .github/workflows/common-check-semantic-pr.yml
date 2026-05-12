@@ -2,6 +2,9 @@ name: Check Semantic PR
 on:
   workflow_call:
 
+permissions:
+  pull-requests: read
+
 jobs:
   semantic-pr:
     name: Validate PR title

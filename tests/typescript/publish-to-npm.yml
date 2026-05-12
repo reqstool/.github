@@ -1,15 +1,15 @@
-name: Test — typescript/publish-to-npm
+name: Test — typescript-publish-to-npm
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/typescript/publish-to-npm.yml
+# Tests for .github/workflows/typescript-publish-to-npm.yml
 # Dry-run executes npm publish --dry-run (no registry upload, no NPM_TOKEN needed).
 # Requires a package.json + npm run build in tests/_resources/fake-npm-package/.
 
 jobs:
   dry-run:
-    uses: ./.github/workflows/typescript/publish-to-npm.yml
+    uses: ./.github/workflows/typescript-publish-to-npm.yml
     with:
       dry-run: true
       scope: "@reqstool"

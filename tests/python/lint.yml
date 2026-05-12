@@ -1,18 +1,18 @@
-name: Test — python/lint
+name: Test — python-lint
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/python/lint.yml
+# Tests for .github/workflows/python-lint.yml
 # Requires src/ and tests/ directories with Python source — validated by actionlint only.
 
 jobs:
   lint-hatch:
-    uses: ./.github/workflows/python/lint.yml
+    uses: ./.github/workflows/python-lint.yml
     with:
       package-manager: hatch
 
   lint-poetry:
-    uses: ./.github/workflows/python/lint.yml
+    uses: ./.github/workflows/python-lint.yml
     with:
       package-manager: poetry

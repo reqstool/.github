@@ -35,7 +35,7 @@ jobs:
         run: pip install yamllint
 
       - name: actionlint
-        run: actionlint .github/workflows/**/*.yml .github/workflows/*.yml
+        run: actionlint .github/workflows/*.yml
 
       - name: zizmor
         run: zizmor --format sarif .github/workflows/ > zizmor.sarif || true
@@ -46,7 +46,7 @@ jobs:
             .github/workflows/
 
   test-check-release:
-    name: Test — common/check-release
+    name: Test — common-check-release
     needs: lint
     runs-on: ubuntu-latest
     strategy:
@@ -107,7 +107,7 @@ jobs:
           REF="${{ steps.fixture.outputs.github_ref }}"
           REF_NAME=$(echo "$REF" | sed 's|refs/tags/||;s|refs/heads/||')
           act workflow_call \
-            -W .github/workflows/common/check-release.yml \
+            -W .github/workflows/common-check-release.yml \
             --eventpath /tmp/event.json \
             --env "GITHUB_REF=$REF" \
             --env "GITHUB_REF_NAME=$REF_NAME" \

@@ -1,14 +1,14 @@
-name: Test — typescript/lint
+name: Test — typescript-lint
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/typescript/lint.yml
+# Tests for .github/workflows/typescript-lint.yml
 # Uses tests/_resources/fake-npm-package which has a minimal package.json.
 # Requires npm run lint and npm run format scripts — validated by actionlint only in ci.yml.
 
 jobs:
   lint:
-    uses: ./.github/workflows/typescript/lint.yml
+    uses: ./.github/workflows/typescript-lint.yml
     with:
       node-version: "24"
