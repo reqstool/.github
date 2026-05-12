@@ -7,6 +7,9 @@ on:
         type: string
         default: "fatal"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
