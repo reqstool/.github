@@ -1,14 +1,14 @@
-name: Test — typescript/build
+name: Test — typescript-build
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/typescript/build.yml
+# Tests for .github/workflows/typescript-build.yml
 # No xvfb, no dependency install — validates the standard npm build path.
 # Requires npm run test and npm run build scripts — validated by actionlint only in ci.yml.
 
 jobs:
   build:
-    uses: ./.github/workflows/typescript/build.yml
+    uses: ./.github/workflows/typescript-build.yml
     with:
       use-xvfb: false

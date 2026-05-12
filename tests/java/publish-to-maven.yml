@@ -1,16 +1,16 @@
-name: Test — java/publish-to-maven
+name: Test — java-publish-to-maven
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/java/publish-to-maven.yml
+# Tests for .github/workflows/java-publish-to-maven.yml
 # Dry-run executes mvn package -DskipTests (no deploy, no GPG, no credentials).
 # Requires a pom.xml in the calling repo — callers that invoke this test
 # must have a Maven project at the repo root.
 
 jobs:
   dry-run:
-    uses: ./.github/workflows/java/publish-to-maven.yml
+    uses: ./.github/workflows/java-publish-to-maven.yml
     with:
       dry-run: true
     permissions:

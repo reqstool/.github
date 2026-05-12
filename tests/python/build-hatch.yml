@@ -1,13 +1,13 @@
-name: Test — python/build-hatch
+name: Test — python-build-hatch
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/python/build-hatch.yml
+# Tests for .github/workflows/python-build-hatch.yml
 # Requires pyproject.toml + src/ — validated by actionlint only in ci.yml.
 
 jobs:
   build:
-    uses: ./.github/workflows/python/build-hatch.yml
+    uses: ./.github/workflows/python-build-hatch.yml
     with:
       coverage-source: ""

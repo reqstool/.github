@@ -1,15 +1,15 @@
-name: Test — common/publish-to-docker
+name: Test — common-publish-to-docker
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/common/publish-to-docker.yml
+# Tests for .github/workflows/common-publish-to-docker.yml
 # Uses dry-run mode: builds the image but does not push.
 # Requires tests/_resources/fake-docker-context/Dockerfile.
 
 jobs:
   dry-run:
-    uses: ./.github/workflows/common/publish-to-docker.yml
+    uses: ./.github/workflows/common-publish-to-docker.yml
     with:
       version: "1.0.0"
       image-name: "reqstool-org/test-image"

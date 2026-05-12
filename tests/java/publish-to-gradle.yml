@@ -1,21 +1,21 @@
-name: Test — java/publish-to-gradle
+name: Test — java-publish-to-gradle
 
 on:
   workflow_call:
 
-# Tests for .github/workflows/java/publish-to-gradle.yml
+# Tests for .github/workflows/java-publish-to-gradle.yml
 # Dry-run executes ./gradlew build -x test (no publish task, no credentials).
 # Requires a build.gradle / build.gradle.kts in the calling repo.
 
 jobs:
   dry-run-portal:
-    uses: ./.github/workflows/java/publish-to-gradle.yml
+    uses: ./.github/workflows/java-publish-to-gradle.yml
     with:
       target: portal
       dry-run: true
 
   dry-run-central:
-    uses: ./.github/workflows/java/publish-to-gradle.yml
+    uses: ./.github/workflows/java-publish-to-gradle.yml
     with:
       target: central
       dry-run: true
