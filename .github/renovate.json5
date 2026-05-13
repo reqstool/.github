@@ -39,6 +39,8 @@
     addLabels: ["security"],
   },
 
+  osvVulnerabilityAlerts: true,
+
   packageRules: [
 
     // =====================================================
