@@ -63,8 +63,17 @@ jobs:
         id: vsix
         run: echo "path=$(find . -maxdepth 1 -name '*.vsix' | head -1)" >> "$GITHUB_OUTPUT"
 
+      - name: Check token availability
+        id: tokens
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          [ -n "$OPEN_VSX_TOKEN" ] && echo "open_vsx=true" >> "$GITHUB_OUTPUT" || echo "open_vsx=false" >> "$GITHUB_OUTPUT"
+          [ -n "$VSCE_PAT" ] && echo "vsce=true" >> "$GITHUB_OUTPUT" || echo "vsce=false" >> "$GITHUB_OUTPUT"
+
       - name: Publish to Open VSX Registry
-        if: ${{ contains(inputs.registries, 'open-vsx') }}
+        if: ${{ contains(inputs.registries, 'open-vsx') && steps.tokens.outputs.open_vsx == 'true' }}
         uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
@@ -72,7 +81,7 @@ jobs:
           dryRun: ${{ inputs.dry-run }}
 
       - name: Publish to VS Code Marketplace
-        if: ${{ contains(inputs.registries, 'vscode-marketplace') }}
+        if: ${{ contains(inputs.registries, 'vscode-marketplace') && steps.tokens.outputs.vsce == 'true' }}
         uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.VSCE_PAT }}
