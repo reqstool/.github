@@ -9,6 +9,9 @@ on:
         type: string
         default: ".github/renovate.json5"
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Validate Renovate config
