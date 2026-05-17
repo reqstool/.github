@@ -1,0 +1,27 @@
+name: Validate Renovate config
+
+on:
+  workflow_call:
+    inputs:
+      config-path:
+        description: "Path to the Renovate config file relative to the repository root"
+        required: false
+        type: string
+        default: ".github/renovate.json5"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Renovate config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate ${{ inputs.config-path }}
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/repo" \
+            renovate/renovate \
+            renovate-config-validator /repo/${{ inputs.config-path }}

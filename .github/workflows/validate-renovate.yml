@@ -1,0 +1,17 @@
+name: Validate Renovate config
+
+on:
+  push:
+    paths:
+      - ".github/renovate.json5"
+  pull_request:
+    paths:
+      - ".github/renovate.json5"
+
+permissions: {}
+
+jobs:
+  validate:
+    uses: ./.github/workflows/common-validate-renovate.yml
+    with:
+      config-path: .github/renovate.json5
