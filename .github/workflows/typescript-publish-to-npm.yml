@@ -3,6 +3,11 @@ name: Publish to npm
 on:
   workflow_call:
     inputs:
+      working-directory:
+        description: "Project root relative to repo root. Default '.' for repo-root projects."
+        required: false
+        type: string
+        default: "."
       dry-run:
         description: "Run npm publish --dry-run. No NPM_TOKEN needed."
         required: false
@@ -25,6 +30,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4
 

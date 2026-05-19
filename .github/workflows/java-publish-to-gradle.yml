@@ -3,6 +3,11 @@ name: Publish via Gradle
 on:
   workflow_call:
     inputs:
+      working-directory:
+        description: "Project root relative to repo root. Default '.' for repo-root projects."
+        required: false
+        type: string
+        default: "."
       target:
         description: "Publish target: portal (Gradle Plugin Portal) or central (Maven Central / Sonatype)."
         required: true
@@ -34,6 +39,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4
 
