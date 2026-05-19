@@ -3,6 +3,11 @@ name: Build (TypeScript)
 on:
   workflow_call:
     inputs:
+      working-directory:
+        description: "Project root relative to repo root. Default '.' for repo-root projects."
+        required: false
+        type: string
+        default: "."
       node-version:
         description: "Node.js version to use."
         required: false
@@ -29,6 +34,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,15 +69,15 @@ jobs:
       - run: npm run build
 
       - name: Upload VSIX artifact
-        if: ${{ hashFiles('*.vsix') != '' }}
+        if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: "*.vsix"
+          path: "${{ inputs.working-directory }}/*.vsix"
 
       - name: Upload dist artifact
-        if: ${{ hashFiles('*.vsix') == '' && hashFiles('dist/**') != '' }}
+        if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) == '' && hashFiles(format('{0}/dist/**', inputs.working-directory)) != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: ${{ inputs.working-directory }}/dist/

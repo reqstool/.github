@@ -3,6 +3,11 @@ name: Build (Python / Hatch)
 on:
   workflow_call:
     inputs:
+      working-directory:
+        description: "Project root relative to repo root. Default '.' for repo-root projects."
+        required: false
+        type: string
+        default: "."
       python-version:
         description: "Python version to use."
         required: false
@@ -17,6 +22,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,4 +54,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: ${{ inputs.working-directory }}/dist/
