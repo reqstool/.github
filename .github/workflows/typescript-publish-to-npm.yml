@@ -9,7 +9,7 @@ on:
         type: string
         default: "."
       dry-run:
-        description: "Run npm publish --dry-run. No NPM_TOKEN needed."
+        description: "Run npm publish --dry-run."
         required: false
         type: boolean
         default: false
@@ -23,13 +23,12 @@ on:
         required: false
         type: string
         default: "public"
-    secrets:
-      NPM_TOKEN:
-        required: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -44,9 +43,22 @@ jobs:
 
       - run: npm ci
 
+      - name: Set version from tag
+        if: ${{ github.ref_type == 'tag' }}
+        env:
+          TAG: ${{ github.ref_name }}
+        run: npm version "$TAG" --no-git-tag-version
+
       - run: npm run build
 
       - name: Publish
-        run: npm publish --access ${{ inputs.access }}${{ inputs.dry-run && ' --dry-run' || '' }}
+        if: ${{ !inputs.dry-run }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          ACCESS: ${{ inputs.access }}
+        run: npm publish --provenance --access "$ACCESS"
+
+      - name: Publish (dry-run)
+        if: ${{ inputs.dry-run }}
+        env:
+          ACCESS: ${{ inputs.access }}
+        run: npm publish --provenance --access "$ACCESS" --dry-run
