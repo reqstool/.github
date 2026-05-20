@@ -9,7 +9,7 @@ on:
         type: string
         default: "."
       dry-run:
-        description: "Run npm publish --dry-run. No NPM_TOKEN needed."
+        description: "Run npm publish --dry-run."
         required: false
         type: boolean
         default: false
@@ -23,13 +23,12 @@ on:
         required: false
         type: string
         default: "public"
-    secrets:
-      NPM_TOKEN:
-        required: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -42,11 +41,15 @@ jobs:
           registry-url: https://registry.npmjs.org
           scope: ${{ inputs.scope }}
 
+      - run: npm install -g npm@latest
+
       - run: npm ci
+
+      - name: Set version from tag
+        if: ${{ github.ref_type == 'tag' }}
+        run: npm version ${{ github.ref_name }} --no-git-tag-version
 
       - run: npm run build
 
       - name: Publish
-        run: npm publish --access ${{ inputs.access }}${{ inputs.dry-run && ' --dry-run' || '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access ${{ inputs.access }}${{ inputs.dry-run && ' --dry-run' || '' }}
