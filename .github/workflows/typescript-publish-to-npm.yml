@@ -41,15 +41,24 @@ jobs:
           registry-url: https://registry.npmjs.org
           scope: ${{ inputs.scope }}
 
-      - run: npm install -g npm@latest
-
       - run: npm ci
 
       - name: Set version from tag
         if: ${{ github.ref_type == 'tag' }}
-        run: npm version ${{ github.ref_name }} --no-git-tag-version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: npm version "$TAG" --no-git-tag-version
 
       - run: npm run build
 
       - name: Publish
-        run: npm publish --provenance --access ${{ inputs.access }}${{ inputs.dry-run && ' --dry-run' || '' }}
+        if: ${{ !inputs.dry-run }}
+        env:
+          ACCESS: ${{ inputs.access }}
+        run: npm publish --provenance --access "$ACCESS"
+
+      - name: Publish (dry-run)
+        if: ${{ inputs.dry-run }}
+        env:
+          ACCESS: ${{ inputs.access }}
+        run: npm publish --provenance --access "$ACCESS" --dry-run
