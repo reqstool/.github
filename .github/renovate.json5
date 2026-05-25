@@ -66,16 +66,19 @@
       addLabels: ["renovate-version-major"],
       separateMajorMinor: true,
       separateMultipleMajor: true,
+      minimumReleaseDays: 7,
     },
     {
       matchUpdateTypes: ["minor"],
       addLabels: ["renovate-version-minor"],
       automerge: true,
+      minimumReleaseDays: 3,
     },
     {
       matchUpdateTypes: ["patch"],
       addLabels: ["renovate-version-patch"],
       automerge: true,
+      minimumReleaseDays: 3,
     },
     {
       matchUpdateTypes: ["digest"],
