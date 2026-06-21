@@ -1,0 +1,37 @@
+name: "Validate reqstool"
+description: "Install reqstool (from PyPI or reqstool-client@main) and run reqstool validate --strict (spec completeness: every requirement has SVCs, manual SVCs have MVRs) against a reqstool data path. Must run after the repo's own build step, in the same job, since it depends on build-time artifacts (e.g. annotations.yml, test results). The 'validate' subcommand isn't on PyPI yet — until it ships in a release, only invoke this action for a 'main' leg."
+
+inputs:
+  reqstool-source:
+    description: "Where to install reqstool from: 'pypi' (latest release) or 'main' (reqstool-client@main)."
+    required: false
+    default: "pypi"
+  reqstool-path:
+    description: "Path to the reqstool data directory (containing requirements.yml etc.), relative to repo root."
+    required: false
+    default: "docs/reqstool"
+  python-version:
+    description: "Python version to use."
+    required: false
+    default: "3.13"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install reqstool (${{ inputs.reqstool-source }})
+      shell: bash
+      run: |
+        if [ "${{ inputs.reqstool-source }}" = "main" ]; then
+          pip install "reqstool @ git+https://github.com/reqstool/reqstool-client.git@main"
+        else
+          pip install reqstool
+        fi
+
+    - name: Run reqstool validate --strict
+      shell: bash
+      run: reqstool validate --strict local -p "$GITHUB_WORKSPACE"/${{ inputs.reqstool-path }}

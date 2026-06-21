@@ -1,0 +1,46 @@
+name: "reqstool status"
+description: "Install reqstool (from PyPI or reqstool-client@main) and run reqstool status against a reqstool data path. By default just reports status; set fail-if-incomplete to gate CI on every requirement being complete. Must run after the repo's own build step, in the same job, since it depends on build-time artifacts (e.g. annotations.yml, test results)."
+
+inputs:
+  reqstool-source:
+    description: "Where to install reqstool from: 'pypi' (latest release) or 'main' (reqstool-client@main)."
+    required: false
+    default: "pypi"
+  reqstool-path:
+    description: "Path to the reqstool data directory (containing requirements.yml etc.), relative to repo root."
+    required: false
+    default: "docs/reqstool"
+  fail-if-incomplete:
+    description: "Fail the step unless all requirements are implemented (passes --check-all-reqs-met). Leave false for repos that intentionally have incomplete requirements (e.g. demo/fixture repos)."
+    required: false
+    default: "false"
+  python-version:
+    description: "Python version to use."
+    required: false
+    default: "3.13"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install reqstool (${{ inputs.reqstool-source }})
+      shell: bash
+      run: |
+        if [ "${{ inputs.reqstool-source }}" = "main" ]; then
+          pip install "reqstool @ git+https://github.com/reqstool/reqstool-client.git@main"
+        else
+          pip install reqstool
+        fi
+
+    - name: Run reqstool status
+      shell: bash
+      run: |
+        if [ "${{ inputs.fail-if-incomplete }}" = "true" ]; then
+          reqstool status --verbosity compact --check-all-reqs-met local -p "$GITHUB_WORKSPACE"/${{ inputs.reqstool-path }}
+        else
+          reqstool status --verbosity compact local -p "$GITHUB_WORKSPACE"/${{ inputs.reqstool-path }}
+        fi
