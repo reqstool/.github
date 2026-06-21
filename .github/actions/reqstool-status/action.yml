@@ -21,7 +21,7 @@ runs:
         REQSTOOL_PATH: ${{ inputs.reqstool-path }}
       run: |
         if [ "$FAIL_IF_INCOMPLETE" = "true" ]; then
-          reqstool status --verbosity compact --check-all-reqs-met local -p "$GITHUB_WORKSPACE/$REQSTOOL_PATH"
+          reqstool status --check-all-reqs-met local -p "$GITHUB_WORKSPACE/$REQSTOOL_PATH"
         else
-          reqstool status --verbosity compact local -p "$GITHUB_WORKSPACE/$REQSTOOL_PATH"
+          reqstool status local -p "$GITHUB_WORKSPACE/$REQSTOOL_PATH"
         fi
