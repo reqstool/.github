@@ -42,14 +42,14 @@ jobs:
 
       - name: Set up Java (dry-run)
         if: ${{ inputs.dry-run }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
 
       - name: Set up Java (publish)
         if: ${{ !inputs.dry-run }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
