@@ -43,7 +43,7 @@ jobs:
       - name: Build site
         run: npx antora ${{ inputs.antora-playbook }}
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/build/site
 
