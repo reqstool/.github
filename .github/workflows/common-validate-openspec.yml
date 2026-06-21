@@ -1,0 +1,37 @@
+name: Validate OpenSpec specs
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: "Project root relative to repo root. Default '.' for repo-root projects."
+        required: false
+        type: string
+        default: "."
+      node-version:
+        description: "Node.js version to use."
+        required: false
+        type: string
+        default: "24"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate OpenSpec specs
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Validate OpenSpec specs
+        run: |
+          npm install -g @fission-ai/openspec
+          openspec validate --specs --strict
