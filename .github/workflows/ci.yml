@@ -18,7 +18,7 @@ jobs:
     name: Lint workflows
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install actionlint
         run: |
@@ -63,7 +63,7 @@ jobs:
           - hotfix-branch
           - release-branch
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
