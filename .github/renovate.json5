@@ -26,6 +26,9 @@
   prConcurrentLimit: 10,
   prHourlyLimit: 5,
 
+  separateMajorMinor: true,
+  separateMultipleMajor: true,
+
   "git-submodules": {
     enabled: true,
   },
@@ -64,21 +67,19 @@
     {
       matchUpdateTypes: ["major"],
       addLabels: ["renovate-version-major"],
-      separateMajorMinor: true,
-      separateMultipleMajor: true,
-      minimumReleaseDays: 7,
+      minimumReleaseAge: "7 days",
     },
     {
       matchUpdateTypes: ["minor"],
       addLabels: ["renovate-version-minor"],
       automerge: true,
-      minimumReleaseDays: 3,
+      minimumReleaseAge: "3 days",
     },
     {
       matchUpdateTypes: ["patch"],
       addLabels: ["renovate-version-patch"],
       automerge: true,
-      minimumReleaseDays: 3,
+      minimumReleaseAge: "3 days",
     },
     {
       matchUpdateTypes: ["digest"],
