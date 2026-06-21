@@ -26,4 +26,6 @@ runs:
 
     - name: Run reqstool validate --strict
       shell: bash
-      run: reqstool validate --strict local -p "$GITHUB_WORKSPACE"/${{ inputs.reqstool-path }}
+      env:
+        REQSTOOL_PATH: ${{ inputs.reqstool-path }}
+      run: reqstool validate --strict local -p "$GITHUB_WORKSPACE/$REQSTOOL_PATH"

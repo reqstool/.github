@@ -19,10 +19,12 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install reqstool (${{ inputs.reqstool-source }})
+    - name: Install reqstool
       shell: bash
+      env:
+        REQSTOOL_SOURCE: ${{ inputs.reqstool-source }}
       run: |
-        if [ "${{ inputs.reqstool-source }}" = "main" ]; then
+        if [ "$REQSTOOL_SOURCE" = "main" ]; then
           pip install "reqstool @ git+https://github.com/reqstool/reqstool-client.git@main"
         else
           pip install reqstool
