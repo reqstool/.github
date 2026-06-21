@@ -1,0 +1,31 @@
+name: "Install reqstool"
+description: "Set up Python and install reqstool from either PyPI (latest release) or reqstool-client@main."
+
+inputs:
+  reqstool-source:
+    description: "Where to install reqstool from: 'pypi' (latest release) or 'main' (reqstool-client@main)."
+    required: false
+    default: "pypi"
+  python-version:
+    description: "Python version to use."
+    required: false
+    default: "3.13"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install reqstool
+      shell: bash
+      env:
+        REQSTOOL_SOURCE: ${{ inputs.reqstool-source }}
+      run: |
+        if [ "$REQSTOOL_SOURCE" = "main" ]; then
+          pip install "reqstool @ git+https://github.com/reqstool/reqstool-client.git@main"
+        else
+          pip install reqstool
+        fi
