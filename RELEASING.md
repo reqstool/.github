@@ -80,12 +80,21 @@ see what was built, so every step that can fail has already succeeded by the tim
 served it. Promotion itself is one API call against a release that already has its
 artifacts.
 
-### One-time setup
+### The three environments
 
-The gate in step 5 needs a `stable` environment with a required reviewer, and the staging
-publishes need a `test` environment. Both are declared for every repo in
-`reqstool/.github-private`'s safe-settings config — **without them the approval step is
-inert and a release runs straight through.**
+All declared for every repo in `reqstool/.github-private`'s safe-settings config —
+**without them the approval steps are inert and a release runs straight through**, because
+GitHub creates a missing environment on demand with no protection rules.
+
+| Environment | Gates | Reviewer |
+|---|---|---|
+| `release` | Creating the tag and the prerelease. Runs for a release candidate too. | required |
+| `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces. Only a final release reaches it. | required |
+| `test` | Staging publishes, e.g. Test PyPI. | none — a dev build lands there on every push to main |
+
+The split matters: `release` gates something reversible (a tag and a prerelease can be
+deleted), `stable` gates something that cannot be undone. Naming the tag gate `stable` would
+also read strangely when approving a release candidate, which never becomes stable.
 
 ### Why a prerelease rather than a draft
 
