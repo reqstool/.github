@@ -12,6 +12,10 @@ permissions: {}
 
 jobs:
   validate:
+    # `permissions: {}` above grants nothing, and the callee declares
+    # `contents: read` -- asking for more than the caller granted is rejected.
+    permissions:
+      contents: read
     uses: ./.github/workflows/common-validate-renovate.yml
     with:
       config-path: .github/renovate.json5
