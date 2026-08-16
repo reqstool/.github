@@ -76,6 +76,20 @@ jobs:
       previous: ${{ steps.previous.outputs.tag }}
       prerelease: ${{ steps.resolve.outputs.prerelease }}
     steps:
+      # Before the checkout, deliberately. This is also enforced in
+      # common-check-release.yml and again in common-release-tag.yml, but a ref
+      # that may not be released from should not reach a checkout at all -- the
+      # config and the commit history pulled in below both feed git-cliff.
+      # Neither action needs a checkout of its own.
+      - uses: reqstool/.github/.github/actions/check-release-branch@main
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: reqstool/.github/.github/actions/check-version@main
+        with:
+          version: ${{ inputs.version }}
+          version-format: ${{ inputs.version-format }}
+
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
@@ -88,11 +102,6 @@ jobs:
       - uses: reqstool/.github/.github/actions/setup-cliff-config@main
         with:
           config: ${{ inputs.cliff-config }}
-
-      - uses: reqstool/.github/.github/actions/check-version@main
-        with:
-          version: ${{ inputs.version }}
-          version-format: ${{ inputs.version-format }}
 
       # Captured before anything creates the new tag -- a lookup run after that
       # would find the just-created tag instead.
@@ -120,12 +129,6 @@ jobs:
         with:
           version: ${{ steps.resolve.outputs.version }}
           version-format: ${{ inputs.version-format }}
-
-      # Also enforced in common-check-release.yml: this prevents before tagging,
-      # that catches a release made by hand in the UI.
-      - uses: reqstool/.github/.github/actions/check-release-branch@main
-        with:
-          ref: ${{ inputs.ref || github.ref }}
 
       - name: Check tag does not already exist
         env:

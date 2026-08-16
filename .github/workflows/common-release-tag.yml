@@ -25,6 +25,10 @@ on:
         description: "The version resolved by common-release-prepare.yml."
         required: true
         type: string
+      version-format:
+        description: "Version format: semver | pep440 | maven"
+        required: true
+        type: string
       ref:
         description: "Branch to tag. Empty = the branch the caller was dispatched on."
         required: false
@@ -55,12 +59,41 @@ jobs:
     outputs:
       url: ${{ steps.create.outputs.url }}
     steps:
+      # Validated here, not just in prepare, and BEFORE the checkout.
+      #
+      # prepare validates the values *it* was given. This job takes its own
+      # `ref` and `version` inputs, so a caller that wired the two jobs together
+      # differently -- by mistake or otherwise -- would reach a checkout with
+      # contents: write on an unvalidated ref. Cheap to re-check where it
+      # matters; these actions need no checkout of their own.
+      - uses: reqstool/.github/.github/actions/check-release-branch@main
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: reqstool/.github/.github/actions/check-version@main
+        with:
+          version: ${{ inputs.version }}
+          version-format: ${{ inputs.version-format }}
+
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
           fetch-tags: true
           ref: ${{ inputs.ref || github.ref }}
+
+      # prepare checked this too, but an approval sits between the two and a tag
+      # can appear in the meantime -- including from a concurrent release of the
+      # same version. Re-checked here so the collision is an error rather than a
+      # `gh release create` against someone else's tag.
+      - name: Check tag does not already exist
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if git rev-parse "$VERSION" > /dev/null 2>&1; then
+            echo "::error::Tag '$VERSION' already exists"
+            exit 1
+          fi
 
       - uses: actions/download-artifact@v8
         with:
