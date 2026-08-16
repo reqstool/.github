@@ -22,6 +22,11 @@ on:
         required: false
         type: string
         default: ""
+      version:
+        description: "Assert the project resolves to this version before publishing. Empty = no check."
+        required: false
+        type: string
+        default: ""
       dry-run:
         description: "Build without publishing (./gradlew build -x test). No credentials needed."
         required: false
@@ -74,8 +79,19 @@ jobs:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
 
-      - name: Report the resolved version
-        run: ./gradlew printVersion -q
+      # Catches the build and the tag disagreeing before anything reaches the
+      # portal -- most often a shallow clone, which makes git-dyn-semver compute
+      # a version rather than fail.
+      - name: Assert the resolved version
+        env:
+          EXPECTED: ${{ inputs.version }}
+        run: |
+          RESOLVED=$(./gradlew printVersion -q | tail -1)
+          echo "Resolved version: $RESOLVED"
+          if [ -n "$EXPECTED" ] && [ "$RESOLVED" != "$EXPECTED" ]; then
+            echo "::error::Project resolves to '$RESOLVED' but '$EXPECTED' was requested — refusing to publish."
+            exit 1
+          fi
 
       - name: Dry-run build
         if: ${{ inputs.dry-run }}

@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: ""
+      version:
+        description: "Assert the project resolves to this version before deploying. Empty = no check."
+        required: false
+        type: string
+        default: ""
       dry-run:
         description: "Build without deploying (mvn package -DskipTests). No GPG or token needed."
         required: false
@@ -80,8 +85,19 @@ jobs:
           gpg-private-key: ${{ secrets.REQSTOOL_PRIVATE_GPG_KEY }}
           gpg-passphrase: REQSTOOL_PRIVATE_GPG_PASSPHRASE
 
-      - name: Report the resolved version
-        run: mvn --batch-mode help:evaluate -Dexpression=project.version -q -DforceStdout
+      # Catches the build and the tag disagreeing before anything reaches the
+      # registry -- most often a shallow clone, which makes Nisse compute a
+      # version rather than fail.
+      - name: Assert the resolved version
+        env:
+          EXPECTED: ${{ inputs.version }}
+        run: |
+          RESOLVED=$(mvn --batch-mode help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Resolved version: $RESOLVED"
+          if [ -n "$EXPECTED" ] && [ "$RESOLVED" != "$EXPECTED" ]; then
+            echo "::error::Project resolves to '$RESOLVED' but '$EXPECTED' was requested — refusing to publish."
+            exit 1
+          fi
 
       - name: Dry-run build
         if: ${{ inputs.dry-run }}
