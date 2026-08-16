@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: ""
+      environment:
+        description: "GitHub environment to deploy to. Empty = none."
+        required: false
+        type: string
+        default: ""
       dependency-version:
         description: "Version of a bundled external tool to pin (e.g. a CLI version). Empty = use package.json default."
         required: false
@@ -50,9 +55,18 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     permissions:
       contents: write
     steps:
+      # `ref` is caller-supplied and this job runs the project's build with
+      # publish credentials, so constrain it before the checkout. Not
+      # check-release-branch: these legitimately check out a tag.
+      - uses: $/.github/actions/check-version
+        with:
+          version: ${{ inputs.ref }}
+          version-format: semver
+
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
