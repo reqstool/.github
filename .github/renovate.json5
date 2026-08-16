@@ -222,6 +222,23 @@
       automerge: true,
     },
 
+    // Third-party actions are pinned to a commit digest, first-party ones are
+    // not. The split is deliberate: a `v4` tag is mutable, so trusting one from
+    // an account outside this org means trusting whoever can move it — which is
+    // what CodeQL's actions/unpinned-tag flags. GitHub's own `actions/*` sit
+    // inside the same trust boundary as the runner, and pinning them would
+    // replace the major-tag automerge above with a digest bump per action per
+    // week for no change in exposure.
+    //
+    // Renovate keeps the digests current and rewrites the `# vX.Y.Z` comment
+    // alongside them, so the pins do not silently rot.
+    {
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["!/^(actions|github)\\//", "!/^reqstool\\//"],
+      pinDigests: true,
+      addLabels: ["renovate-type-cicd"],
+    },
+
     {
       matchDatasources: ["pypi"],
       addLabels: ["renovate-type-python"],

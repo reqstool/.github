@@ -100,7 +100,7 @@ jobs:
 
       - name: Publish to Open VSX Registry
         if: ${{ contains(inputs.registries, 'open-vsx') }}
-        uses: HaaLeo/publish-vscode-extension@v2
+        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ steps.vsix.outputs.path }}
@@ -108,7 +108,7 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         if: ${{ contains(inputs.registries, 'vscode-marketplace') }}
-        uses: HaaLeo/publish-vscode-extension@v2
+        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
         with:
           pat: ${{ secrets.VSCE_PAT }}
           registryUrl: https://marketplace.visualstudio.com
