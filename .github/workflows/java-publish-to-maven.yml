@@ -59,6 +59,18 @@ jobs:
     steps:
       # Full history and tags: Nisse derives the version from git state, and a
       # shallow clone would deploy the wrong number rather than fail.
+      # Defence in depth. The release flow only ever passes a tag it just
+      # created on a validated branch, but this workflow takes `ref` from its
+      # caller and then runs the project's own build with signing keys and
+      # registry credentials in scope. Constraining it to something
+      # version-shaped, before the checkout, keeps an arbitrary branch or SHA
+      # from reaching that. (`check-release-branch` is the wrong guard here:
+      # these legitimately check out a tag, which it rejects.)
+      - uses: $/.github/actions/check-version
+        with:
+          version: ${{ inputs.ref }}
+          version-format: maven
+
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
