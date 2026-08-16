@@ -13,6 +13,22 @@ on:
         required: false
         type: string
         default: "21"
+      ref:
+        description: "Branch, tag or SHA to build. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+      artifact-name:
+        description: >
+          Name to upload the build output under. The release flow runs a build
+          twice in one run -- once on the branch, once on the tag -- and
+          upload-artifact rejects a duplicate name.
+        required: false
+        type: string
+        default: "dist"
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -21,13 +37,29 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
+      # Full history and tags: the version is derived from git state by Nisse,
+      # so a shallow clone would build the wrong number rather than fail.
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
 
-      - run: mvn clean verify
+      - run: mvn --batch-mode clean verify
+
+      - name: Report the resolved version
+        run: mvn --batch-mode help:evaluate -Dexpression=project.version -q -DforceStdout
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: |
+            ${{ inputs.working-directory }}/target/*.jar
+            ${{ inputs.working-directory }}/target/*.pom
+          if-no-files-found: ignore

@@ -1,0 +1,21 @@
+name: Check version
+description: Fail unless the value is a valid version in the given format, with no v prefix. Empty passes.
+
+inputs:
+  version:
+    description: "Version to validate. Empty is accepted (nothing to check)."
+    required: false
+    default: ""
+  version-format:
+    description: "semver | pep440 | maven"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        FORMAT: ${{ inputs.version-format }}
+      run: |
+        "$GITHUB_ACTION_PATH/check-version.sh" "$VERSION" "$FORMAT"

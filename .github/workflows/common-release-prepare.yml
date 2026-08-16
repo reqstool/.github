@@ -1,0 +1,208 @@
+name: Release — prepare
+
+# Resolves what would be released and writes the summary. Deliberately does
+# nothing durable: a dry run is exactly this workflow and nothing else, so a
+# preview costs one cheap job rather than a full pipeline.
+#
+# First of four. See RELEASING.md for the whole shape, and for why the release is
+# created as a prerelease rather than a draft.
+#
+# The composite actions below use `$/`, which resolves to this repository at the
+# exact commit running -- not the caller's checkout, which is where `./` would
+# look. So a caller that pins this workflow by SHA gets the actions at that same
+# SHA, and the two cannot drift apart.
+
+on:
+  workflow_call:
+    inputs:
+      version-format:
+        description: "Version format: semver | pep440 | maven"
+        required: true
+        type: string
+      version:
+        description: "Version to release (no v prefix). Empty = auto-detect from Conventional Commits."
+        required: false
+        type: string
+        default: ""
+      prerelease:
+        description: "Publish as a release candidate: none | rc | b | a. The number is chosen for you."
+        required: false
+        type: string
+        default: "none"
+      ref:
+        description: "Branch to release from. Empty = the branch the caller was dispatched on."
+        required: false
+        type: string
+        default: ""
+      force:
+        description: "Allow a version that disagrees with the auto-detected one."
+        required: false
+        type: boolean
+        default: false
+      dry-run:
+        description: "Preview only. Nothing downstream of this workflow should run."
+        required: false
+        type: boolean
+        default: true
+      cliff-config:
+        description: "Path to cliff.toml in the calling repo. Empty = repo root, then the org default."
+        required: false
+        type: string
+        default: ""
+    outputs:
+      version:
+        description: "The resolved version to release."
+        value: ${{ jobs.prepare.outputs.version }}
+      auto:
+        description: "The version git-cliff computed from Conventional Commits."
+        value: ${{ jobs.prepare.outputs.auto }}
+      previous:
+        description: "The tag the release notes are measured from."
+        value: ${{ jobs.prepare.outputs.previous }}
+      prerelease:
+        description: "true when the resolved version names a release candidate."
+        value: ${{ jobs.prepare.outputs.prerelease }}
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: resolve version and notes
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      auto: ${{ steps.resolve.outputs.auto }}
+      previous: ${{ steps.previous.outputs.tag }}
+      prerelease: ${{ steps.resolve.outputs.prerelease }}
+    steps:
+      # Before the checkout, deliberately. This is also enforced in
+      # common-check-release.yml and again in common-release-tag.yml, but a ref
+      # that may not be released from should not reach a checkout at all -- the
+      # config and the commit history pulled in below both feed git-cliff.
+      # Neither action needs a checkout of its own.
+      - uses: $/.github/actions/check-release-branch
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: $/.github/actions/check-version
+        with:
+          version: ${{ inputs.version }}
+          version-format: ${{ inputs.version-format }}
+
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: $/.github/actions/setup-git-cliff
+
+      - uses: $/.github/actions/setup-cliff-config
+        with:
+          config: ${{ inputs.cliff-config }}
+
+      # Captured before anything creates the new tag -- a lookup run after that
+      # would find the just-created tag instead.
+      #
+      # Selects tags as git-cliff does, so this names the boundary the notes came
+      # from: cliff.toml's tag_pattern, and no `--merged` because git-cliff does
+      # not require an ancestor of HEAD.
+      - name: Record previous tag
+        id: previous
+        run: |
+          PREV="$(git tag --list --sort=-version:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)"
+          echo "tag=$PREV" >> "$GITHUB_OUTPUT"
+
+      - uses: $/.github/actions/resolve-version
+        id: resolve
+        with:
+          version: ${{ inputs.version }}
+          version-format: ${{ inputs.version-format }}
+          prerelease: ${{ inputs.prerelease }}
+          force: ${{ inputs.force }}
+
+      # The input is validated above; this validates what was *computed* from it,
+      # which until now nothing did.
+      - uses: $/.github/actions/check-version
+        with:
+          version: ${{ steps.resolve.outputs.version }}
+          version-format: ${{ inputs.version-format }}
+
+      - name: Check tag does not already exist
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          if git rev-parse "$VERSION" > /dev/null 2>&1; then
+            echo "::error::Tag '$VERSION' already exists"
+            exit 1
+          fi
+
+      - name: Generate changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git-cliff --config /tmp/cliff.toml --latest --unreleased --strip all --output NOTES.md
+
+      # Handed downstream rather than regenerated at tag time: the notes the
+      # reviewer approved are then provably the notes that ship.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: NOTES.md
+
+      - name: Summary
+        if: always()
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          AUTO: ${{ steps.resolve.outputs.auto }}
+          SOURCE: ${{ steps.resolve.outputs.source }}
+          REF: ${{ inputs.ref || github.ref }}
+          DRY_RUN: ${{ inputs.dry-run }}
+          LATEST: ${{ steps.previous.outputs.tag }}
+          PRERELEASE: ${{ steps.resolve.outputs.prerelease }}
+          FORMAT: ${{ inputs.version-format }}
+        run: |
+          if [ "$PRERELEASE" = "true" ]; then
+            FINISH="tag + prerelease + assets, then STOP — not promoted to latest"
+          else
+            FINISH="tag + prerelease + assets + publish + promote to latest"
+          fi
+          # Test the value: "false" is non-empty, so ${DRY_RUN:+...} would expand
+          # for both.
+          if [ "$DRY_RUN" = "true" ]; then
+            HEADING="Release (dry run)"
+            MODE="dry run — nothing tagged, nothing published"
+          else
+            HEADING="Release"
+            MODE="awaiting approval, then $FINISH"
+          fi
+          {
+            echo "### $HEADING"
+            echo ""
+            echo "| | Value |"
+            echo "|---|---|"
+            echo "| Version | \`$VERSION\` |"
+            echo "| Auto-detected | \`$AUTO\` |"
+            echo "| Source | $SOURCE |"
+            echo "| Format | \`$FORMAT\` |"
+            echo "| Ref | \`$REF\` |"
+            echo "| Previous tag | \`${LATEST:-(none yet)}\` |"
+            echo "| Mode | $MODE |"
+            echo ""
+            echo "#### Release notes"
+            echo ""
+            cat NOTES.md 2>/dev/null || echo "_(not generated — an earlier step failed)_"
+            echo ""
+            # Anything here but missing above was dropped as unconventional or as
+            # a skipped ci:/build: type.
+            echo "<details><summary>Commits since \`${LATEST:-the beginning}\`</summary>"
+            echo ""
+            if [ -n "$LATEST" ]; then
+              git log "${LATEST}..HEAD" --format="- %h %s"
+            else
+              git log --format="- %h %s" | head -40
+            fi
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"

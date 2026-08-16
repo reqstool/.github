@@ -1,0 +1,115 @@
+name: Resolve version
+description: Decide which version to release, from Conventional Commits or an explicit request.
+
+# A composite action rather than steps in the workflow so next-prerelease.sh is
+# reachable: a reusable workflow's `./` paths resolve against the *caller's*
+# checkout, which has no copy of it. $GITHUB_ACTION_PATH is this directory.
+
+inputs:
+  version:
+    description: "Explicitly requested version. Empty = auto-detect."
+    required: false
+    default: ""
+  version-format:
+    description: "semver | pep440 | maven"
+    required: true
+  prerelease:
+    description: "none | rc | b | a"
+    required: false
+    default: "none"
+  force:
+    description: "Allow a version that disagrees with the auto-detected one."
+    required: false
+    default: "false"
+  cliff-config:
+    description: "Path to the resolved cliff.toml."
+    required: false
+    default: "/tmp/cliff.toml"
+
+outputs:
+  version:
+    description: "The version to release."
+    value: ${{ steps.resolve.outputs.version }}
+  auto:
+    description: "What git-cliff computed from Conventional Commits."
+    value: ${{ steps.resolve.outputs.auto }}
+  source:
+    description: "Human-readable account of where the version came from."
+    value: ${{ steps.resolve.outputs.source }}
+  prerelease:
+    description: "true when the resolved version names a release candidate."
+    value: ${{ steps.resolve.outputs.prerelease }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        REQUESTED: ${{ inputs.version }}
+        FORCE: ${{ inputs.force }}
+        KIND: ${{ inputs.prerelease }}
+        FORMAT: ${{ inputs.version-format }}
+        CLIFF_CONFIG: ${{ inputs.cliff-config }}
+      run: |
+        set -euo pipefail
+        AUTO="$(git-cliff --config "$CLIFF_CONFIG" --bumped-version)"
+
+        # The force check compares the *base*, not the suffixed version:
+        # git-cliff never proposes an rc, so the latter would demand `force` for
+        # every candidate.
+        if [ -z "$REQUESTED" ]; then
+          BASE="$AUTO"
+          SOURCE="auto-detected from Conventional Commits"
+        else
+          # Format-validated by check-version before this runs.
+          BASE="$REQUESTED"
+          if [ "$BASE" != "$AUTO" ]; then
+            if [ "$FORCE" != "true" ]; then
+              echo "::error::Version '$BASE' disagrees with the auto-detected '$AUTO'. Re-run with force enabled if that is deliberate."
+              exit 1
+            fi
+            echo "::warning::Forcing '$BASE' over the auto-detected '$AUTO'."
+            SOURCE="user-specified (forced over '$AUTO')"
+          else
+            SOURCE="user-specified (matches auto-detected)"
+          fi
+        fi
+
+        # Auto-detect can legitimately return nothing useful -- e.g. a repo with
+        # no tags *and* no conventional commits to infer a bump from. Better to
+        # fail here than to try tagging an empty string.
+        if [ -z "$BASE" ]; then
+          echo "::error::Could not determine a version to release. Pass one explicitly."
+          exit 1
+        fi
+
+        # Matches all three spellings: 0.5.0rc1, 0.5.0-rc.1, 0.5.0-rc1.
+        PRE_RE='(a|b|rc)\.?[0-9]+$'
+
+        VERSION="$BASE"
+        if [ "$KIND" != "none" ] && [ -n "$KIND" ]; then
+          # A version typed with its own segment is taken at face value --
+          # re-suffixing 0.5.0rc1 would produce nonsense.
+          if echo "$BASE" | grep -qE "$PRE_RE"; then
+            echo "::warning::'$BASE' already names a prerelease; using it as given rather than appending '$KIND'."
+          else
+            VERSION="$("$GITHUB_ACTION_PATH/next-prerelease.sh" "$BASE" "$KIND" "$FORMAT")"
+            SOURCE="$SOURCE, as $KIND"
+          fi
+        fi
+
+        # Read off the resolved version, not the input, so a hand-typed 0.5.0rc1
+        # is treated as the prerelease it is.
+        if echo "$VERSION" | grep -qE "$PRE_RE"; then
+          PRERELEASE=true
+        else
+          PRERELEASE=false
+        fi
+
+        {
+          echo "version=$VERSION"
+          echo "auto=$AUTO"
+          echo "source=$SOURCE"
+          echo "prerelease=$PRERELEASE"
+        } >> "$GITHUB_OUTPUT"

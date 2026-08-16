@@ -1,0 +1,54 @@
+name: Build Antora site
+description: Install Antora and build the documentation site.
+
+# Shared by common-build-docs.yml (validate on PR) and
+# common-publish-to-github-pages.yml (deploy). The two used to install Antora
+# separately, and the deploy path installed it unpinned -- so a site could
+# validate against one Antora and publish from another.
+
+inputs:
+  antora-version:
+    description: "@antora/cli and @antora/site-generator version."
+    required: false
+    default: "3.1.14"
+  kroki-version:
+    description: "asciidoctor-kroki version."
+    required: false
+    default: "0.18.1"
+  playbook:
+    description: "Path to the Antora playbook."
+    required: false
+    default: "docs/antora-playbook.yml"
+  log-failure-level:
+    description: "Antora log level that fails the build (fatal, error, warn)."
+    required: false
+    default: "fatal"
+
+runs:
+  using: composite
+  steps:
+    # A repo with its own lockfile pins Antora itself; installing over it would
+    # silently override that pin.
+    - name: Install Antora
+      shell: bash
+      env:
+        ANTORA_VERSION: ${{ inputs.antora-version }}
+        KROKI_VERSION: ${{ inputs.kroki-version }}
+      run: |
+        set -euo pipefail
+        if [ -f package-lock.json ]; then
+          echo "Using the repo's own lockfile."
+          npm ci
+        else
+          npm i \
+            "@antora/cli@${ANTORA_VERSION}" \
+            "@antora/site-generator@${ANTORA_VERSION}" \
+            "asciidoctor-kroki@${KROKI_VERSION}"
+        fi
+
+    - name: Build site
+      shell: bash
+      env:
+        PLAYBOOK: ${{ inputs.playbook }}
+        LEVEL: ${{ inputs.log-failure-level }}
+      run: npx antora --log-failure-level="$LEVEL" "$PLAYBOOK"

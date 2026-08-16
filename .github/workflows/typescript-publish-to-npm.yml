@@ -23,6 +23,19 @@ on:
         required: false
         type: string
         default: "public"
+      version:
+        description: "Version to publish. Empty = the tag, when the caller ran on one."
+        required: false
+        type: string
+        default: ""
+      ref:
+        description: "Branch, tag or SHA to publish from. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
 
 jobs:
   publish:
@@ -34,6 +47,9 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-node@v7
         with:
@@ -43,11 +59,14 @@ jobs:
 
       - run: npm ci
 
-      - name: Set version from tag
-        if: ${{ github.ref_type == 'tag' }}
+      # npm has no equivalent of hatch-vcs, so the version has to be written into
+      # package.json by hand. `version` is what the release flow passes; the tag
+      # covers a publish triggered by a release event.
+      - name: Set the version
+        if: ${{ inputs.version != '' || github.ref_type == 'tag' }}
         env:
-          TAG: ${{ github.ref_name }}
-        run: npm version "$TAG" --no-git-tag-version
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - run: npm run build
 

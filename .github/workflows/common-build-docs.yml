@@ -1,11 +1,23 @@
 name: Build Docs
+
 on:
   workflow_call:
     inputs:
       log-failure-level:
         description: "Antora log failure level (fatal, error, warn)"
+        required: false
         type: string
         default: "fatal"
+      antora-playbook:
+        description: "Path to the Antora playbook file."
+        required: false
+        type: string
+        default: "docs/antora-playbook.yml"
+      node-version:
+        description: "Node.js version to use for Antora."
+        required: false
+        type: string
+        default: "24"
 
 permissions:
   contents: read
@@ -14,15 +26,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - name: Install Node.js
-        uses: actions/setup-node@v7
+
+      - uses: actions/setup-node@v7
         with:
-          node-version: "24"
-      - name: Install Antora
-        run: npm i @antora/cli@3.1.14 @antora/site-generator@3.1.14 asciidoctor-kroki@0.18.1
-      - name: Build docs
-        run: npx antora --log-failure-level=${{ inputs.log-failure-level }} docs/antora-playbook.yml
+          node-version: ${{ inputs.node-version }}
+
+      - uses: $/.github/actions/build-antora-site
+        with:
+          playbook: ${{ inputs.antora-playbook }}
+          log-failure-level: ${{ inputs.log-failure-level }}

@@ -8,6 +8,16 @@ on:
         required: false
         type: boolean
         default: false
+      version:
+        description: "Stamp package.json with this version before packaging. Empty = leave as-is."
+        required: false
+        type: string
+        default: ""
+      ref:
+        description: "Branch, tag or SHA to package from. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
       dependency-version:
         description: "Version of a bundled external tool to pin (e.g. a CLI version). Empty = use package.json default."
         required: false
@@ -23,11 +33,19 @@ on:
         required: false
         type: string
         default: "open-vsx,vscode-marketplace"
+      upload-to-release:
+        description: "Attach the VSIX to the release named by `version`."
+        required: false
+        type: boolean
+        default: false
     secrets:
       OPEN_VSX_TOKEN:
         required: false
       VSCE_PAT:
         required: false
+
+permissions:
+  contents: read
 
 jobs:
   publish:
@@ -37,8 +55,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-tags: true
           fetch-depth: 0
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-node@v7
         with:
@@ -46,15 +66,30 @@ jobs:
 
       - run: npm ci
 
+      # Without this the VSIX carries whatever placeholder package.json holds --
+      # `0.0.0-dev` in reqstool-vscode -- and every published extension reports
+      # that version regardless of what was released. Must run before the build:
+      # `npm run build` is what packages the VSIX.
+      - name: Stamp the version
+        if: ${{ inputs.version != '' }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
       - name: Pin dependency version
         if: ${{ inputs.dependency-version != '' && inputs.dependency-name != '' }}
-        run: npm pkg set "${{ inputs.dependency-name }}=${{ inputs.dependency-version }}"
+        env:
+          DEP_NAME: ${{ inputs.dependency-name }}
+          DEP_VERSION: ${{ inputs.dependency-version }}
+        run: npm pkg set "${DEP_NAME}=${DEP_VERSION}"
 
       - name: Log effective dependency version
         if: ${{ inputs.dependency-name != '' }}
+        env:
+          DEP_NAME: ${{ inputs.dependency-name }}
         run: |
-          VERSION=$(node -p "require('./package.json')['${{ inputs.dependency-name }}'] || '(not set)'")
-          echo "${{ inputs.dependency-name }}: $VERSION"
+          VALUE=$(node -p "require('./package.json')[process.env.DEP_NAME] || '(not set)'")
+          echo "$DEP_NAME: $VALUE"
 
       - name: Build VSIX
         run: npm run build
@@ -65,7 +100,7 @@ jobs:
 
       - name: Publish to Open VSX Registry
         if: ${{ contains(inputs.registries, 'open-vsx') }}
-        uses: HaaLeo/publish-vscode-extension@v2
+        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ steps.vsix.outputs.path }}
@@ -73,7 +108,7 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         if: ${{ contains(inputs.registries, 'vscode-marketplace') }}
-        uses: HaaLeo/publish-vscode-extension@v2
+        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
         with:
           pat: ${{ secrets.VSCE_PAT }}
           registryUrl: https://marketplace.visualstudio.com
@@ -81,7 +116,10 @@ jobs:
           dryRun: ${{ inputs.dry-run }}
 
       - name: Upload VSIX to GitHub Release
-        if: ${{ !inputs.dry-run && github.event_name == 'release' }}
-        run: gh release upload "${{ github.ref_name }}" "${{ steps.vsix.outputs.path }}"
+        if: ${{ !inputs.dry-run && (inputs.upload-to-release || github.event_name == 'release') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.version || github.ref_name }}
+          VSIX: ${{ steps.vsix.outputs.path }}
+          REPO: ${{ github.repository }}
+        run: gh release upload "$TAG" "$VSIX" --repo "$REPO" --clobber

@@ -1,0 +1,92 @@
+name: Release — assert and attach artifacts
+
+# Third of four. Takes the artifacts the caller built *from the tag*, checks they
+# carry the version they claim to, and attaches them to the prerelease.
+#
+# Runs before promotion, which is the invariant that matters: nothing is ever
+# served at /releases/latest without its artifacts already in place. The old flow
+# attached them after publication, leaving a window in which the release existed
+# with nothing to download.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "The version being released. Artifacts must carry it."
+        required: true
+        type: string
+      artifact:
+        description: "Name of the uploaded build artifact to attach."
+        required: false
+        type: string
+        default: "dist"
+      pattern:
+        description: "Glob, relative to the artifact root, selecting what to attach."
+        required: false
+        type: string
+        default: "*"
+      assert-version:
+        description: "Require the version to appear in at least one artifact filename."
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  assets:
+    name: attach artifacts to the prerelease
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.artifact }}
+          path: dist
+
+      - name: List what was built
+        run: find dist -type f | sort
+
+      # Catches the build and the tag disagreeing -- most often a dirty working
+      # tree making a dynamic-versioning plugin append a snapshot or +dirty
+      # suffix to an otherwise-correct tag. Checked against the artifact rather
+      # than the workspace, so it proves what will actually be downloaded.
+      - name: Assert the artifacts carry the version
+        if: ${{ inputs.assert-version }}
+        env:
+          VERSION: ${{ inputs.version }}
+          PATTERN: ${{ inputs.pattern }}
+        run: |
+          set -euo pipefail
+          MATCHED=$(find dist -type f -name "*${VERSION}*" | wc -l)
+          if [ "$MATCHED" -eq 0 ]; then
+            echo "::error::No artifact filename contains '$VERSION' — refusing to release."
+            echo "::error::Built: $(find dist -type f -printf '%f ' 2>/dev/null)"
+            exit 1
+          fi
+          echo "$MATCHED artifact(s) carry '$VERSION'."
+
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          PATTERN: ${{ inputs.pattern }}
+          ARTIFACT: ${{ inputs.artifact }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mapfile -t FILES < <(find dist -type f -name "$PATTERN" | sort)
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "::error::Pattern '$PATTERN' matched nothing under the '$ARTIFACT' artifact."
+            exit 1
+          fi
+          gh release upload "$VERSION" --repo "$REPO" --clobber "${FILES[@]}"
+          {
+            echo "### Artifacts attached"
+            echo ""
+            for f in "${FILES[@]##*/}"; do
+              echo "- \`$f\`"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

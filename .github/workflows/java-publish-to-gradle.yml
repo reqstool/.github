@@ -17,11 +17,26 @@ on:
         required: false
         type: string
         default: "21"
+      ref:
+        description: "Branch, tag or SHA to publish from. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+      version:
+        description: "Assert the project resolves to this version before publishing. Empty = no check."
+        required: false
+        type: string
+        default: ""
       dry-run:
         description: "Build without publishing (./gradlew build -x test). No credentials needed."
         required: false
         type: boolean
         default: false
+      environment:
+        description: "GitHub environment to deploy to. Empty = none."
+        required: false
+        type: string
+        default: ""
     secrets:
       GRADLE_PUBLISH_KEY:
         required: false
@@ -36,20 +51,47 @@ on:
       OSSRH_TOKEN:
         required: false
 
+permissions:
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
     steps:
+      # Full history and tags: git-dyn-semver derives the version from git state,
+      # and a shallow clone would publish the wrong number rather than fail.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
+
+      # Catches the build and the tag disagreeing before anything reaches the
+      # portal -- most often a shallow clone, which makes git-dyn-semver compute
+      # a version rather than fail.
+      - name: Assert the resolved version
+        env:
+          EXPECTED: ${{ inputs.version }}
+        run: |
+          RESOLVED=$(./gradlew printVersion -q | tail -1)
+          echo "Resolved version: $RESOLVED"
+          if [ -n "$EXPECTED" ] && [ "$RESOLVED" != "$EXPECTED" ]; then
+            echo "::error::Project resolves to '$RESOLVED' but '$EXPECTED' was requested — refusing to publish."
+            exit 1
+          fi
 
       - name: Dry-run build
         if: ${{ inputs.dry-run }}

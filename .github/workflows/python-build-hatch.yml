@@ -18,6 +18,22 @@ on:
         required: false
         type: string
         default: ""
+      ref:
+        description: "Branch, tag or SHA to build. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+      artifact-name:
+        description: >
+          Name to upload the build output under. The release flow runs a build
+          twice in one run -- once on the branch, once on the tag -- and
+          upload-artifact rejects a duplicate name.
+        required: false
+        type: string
+        default: "dist"
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -26,9 +42,14 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
+      # Full history and tags: hatch-vcs derives the version from git state, so a
+      # shallow clone would build the wrong number rather than fail.
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-python@v7
         with:
@@ -38,10 +59,12 @@ jobs:
 
       - name: Run tests (with coverage)
         if: ${{ inputs.coverage-source != '' }}
+        env:
+          COVERAGE_SOURCE: ${{ inputs.coverage-source }}
         run: |
           hatch run dev:pytest \
             --junitxml=build/junit.xml \
-            --cov=${{ inputs.coverage-source }} \
+            --cov="$COVERAGE_SOURCE" \
             --cov-report=xml:build/coverage.xml
 
       - name: Run tests (without coverage)
@@ -53,5 +76,5 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: dist
+          name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/

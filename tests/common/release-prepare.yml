@@ -1,0 +1,37 @@
+name: Test — common-release-prepare
+
+on:
+  workflow_call:
+
+# Dry-run smoke tests for .github/workflows/common-release-prepare.yml: nothing
+# is tagged and nothing is created.
+#
+# The version-resolution rules themselves (auto-detect, force, rc suffixing) are
+# tested by tests/actions/run-tests.sh against the scripts behind the composite
+# actions, which is what CI runs. These confirm the workflow wiring holds for
+# each format.
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run-semver:
+    uses: ./.github/workflows/common-release-prepare.yml
+    with:
+      version: "1.2.3"
+      version-format: semver
+      dry-run: true
+
+  dry-run-pep440:
+    uses: ./.github/workflows/common-release-prepare.yml
+    with:
+      version: "1.2.3rc1"
+      version-format: pep440
+      dry-run: true
+
+  dry-run-maven:
+    uses: ./.github/workflows/common-release-prepare.yml
+    with:
+      version: "1.2.3"
+      version-format: maven
+      dry-run: true

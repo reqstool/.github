@@ -1,0 +1,34 @@
+# zizmor runs without `|| true` in ci.yml, so every finding here is a build
+# failure. This file records the deliberate deviations from its defaults.
+#
+# `unpinned-uses` defaults to demanding a commit hash for every action. That is
+# what third-party actions get here -- a `v4` tag is mutable, so trusting one
+# from outside this org means trusting whoever can move it, and several of these
+# run in workflows holding contents: write. Renovate keeps those digests current
+# (see the pinDigests rule in renovate.json5).
+#
+# GitHub's own `actions/*` keep major version tags. They sit inside the same
+# trust boundary as the runner, so pinning them would trade the major-tag
+# automerge renovate.json5 documents for a digest bump per action per week and
+# no change in exposure.
+#
+# This repository's own composite actions are addressed with the `$/`
+# self-repository syntax, which resolves to this repo at the exact commit
+# running -- so they are pinned more precisely than a hash could manage, and
+# need no policy entry at all.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        actions/*: ref-pin
+        github/*: ref-pin
+        "*": hash-pin
+
+  # These two install a version pinned in the workflow rather than in a lockfile,
+  # because a reusable workflow has no lockfile of its own to commit -- it runs
+  # against arbitrary caller repositories. build-antora-site does use `npm ci`
+  # when the caller has a lockfile; this is the fallback for callers that don't.
+  adhoc-packages:
+    ignore:
+      - action.yml
+      - common-validate-openspec.yml

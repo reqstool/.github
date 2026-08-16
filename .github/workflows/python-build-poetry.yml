@@ -28,6 +28,22 @@ on:
         required: false
         type: boolean
         default: false
+      ref:
+        description: "Branch, tag or SHA to build. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+      artifact-name:
+        description: >
+          Name to upload the build output under. The release flow runs a build
+          twice in one run -- once on the branch, once on the tag -- and
+          upload-artifact rejects a duplicate name.
+        required: false
+        type: string
+        default: "dist"
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -36,15 +52,20 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
+      # Full history and tags: poetry-dynamic-versioning derives the version from
+      # git state, so a shallow clone would build the wrong number rather than fail.
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version }}
 
-      - uses: snok/install-poetry@v1
+      - uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
         with:
           version: ${{ inputs.poetry-version }}
           virtualenvs-create: true
@@ -61,10 +82,12 @@ jobs:
 
       - name: Run tests (with coverage)
         if: ${{ inputs.coverage-source != '' }}
+        env:
+          COVERAGE_SOURCE: ${{ inputs.coverage-source }}
         run: |
           poetry run pytest \
             --junitxml=build/junit.xml \
-            --cov=${{ inputs.coverage-source }} \
+            --cov="$COVERAGE_SOURCE" \
             --cov-report=xml:build/coverage.xml
 
       - name: Run tests (without coverage)
@@ -76,5 +99,5 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: dist
+          name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
