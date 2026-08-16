@@ -1,0 +1,16 @@
+name: Check release branch
+description: Fail unless the ref is a branch releases may be cut from.
+
+inputs:
+  ref:
+    description: "Branch name or refs/heads/... ref."
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        REF: ${{ inputs.ref }}
+      run: |
+        "$GITHUB_ACTION_PATH/check-release-branch.sh" "$REF"

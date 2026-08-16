@@ -18,10 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Validate ${{ inputs.config-path }}
+        env:
+          CONFIG_PATH: ${{ inputs.config-path }}
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/repo" \
             renovate/renovate \
-            renovate-config-validator /repo/${{ inputs.config-path }}
+            renovate-config-validator "/repo/$CONFIG_PATH"

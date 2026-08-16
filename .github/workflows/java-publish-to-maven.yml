@@ -13,11 +13,21 @@ on:
         required: false
         type: string
         default: "21"
+      ref:
+        description: "Branch, tag or SHA to publish from. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
       dry-run:
         description: "Build without deploying (mvn package -DskipTests). No GPG or token needed."
         required: false
         type: boolean
         default: false
+      environment:
+        description: "GitHub environment to deploy to. Empty = none."
+        required: false
+        type: string
+        default: ""
     secrets:
       MAVEN_CENTRAL_USERNAME:
         required: false
@@ -28,17 +38,28 @@ on:
       REQSTOOL_PRIVATE_GPG_PASSPHRASE:
         required: false
 
+permissions:
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    environment: ${{ inputs.environment }}
     permissions:
       contents: read
       packages: write
     steps:
+      # Full history and tags: Nisse derives the version from git state, and a
+      # shallow clone would deploy the wrong number rather than fail.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Set up Java (dry-run)
         if: ${{ inputs.dry-run }}
@@ -59,13 +80,16 @@ jobs:
           gpg-private-key: ${{ secrets.REQSTOOL_PRIVATE_GPG_KEY }}
           gpg-passphrase: REQSTOOL_PRIVATE_GPG_PASSPHRASE
 
+      - name: Report the resolved version
+        run: mvn --batch-mode help:evaluate -Dexpression=project.version -q -DforceStdout
+
       - name: Dry-run build
         if: ${{ inputs.dry-run }}
-        run: mvn clean package -DskipTests
+        run: mvn --batch-mode clean package -DskipTests
 
       - name: Publish to Maven Central
         if: ${{ !inputs.dry-run }}
-        run: mvn clean deploy
+        run: mvn --batch-mode clean deploy
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}

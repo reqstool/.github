@@ -30,6 +30,19 @@ on:
         required: false
         type: string
         default: ""
+      ref:
+        description: "Branch, tag or SHA to build. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+      version:
+        description: "Stamp package.json with this version before building. Empty = leave as-is."
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -40,8 +53,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-node@v7
         with:
@@ -49,11 +64,26 @@ jobs:
 
       - run: npm ci
 
+      # npm has no equivalent of hatch-vcs, so the tag has to be written into
+      # package.json by hand. Done here rather than at publish time because the
+      # VSIX is produced by `npm run build` below -- stamping afterwards would
+      # leave the artifact carrying the repo's placeholder version.
+      - name: Stamp the version
+        if: ${{ inputs.version != '' }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      # The command is `eval`ed by design -- callers supply their own installer
+      # line. Read from the environment rather than interpolated into the script
+      # body so the value cannot terminate the surrounding shell construct.
       - name: Install dependency
         if: ${{ inputs.dependency-version != '' && inputs.dependency-install-command != '' }}
+        env:
+          INSTALL_COMMAND: ${{ inputs.dependency-install-command }}
+          DEP_VERSION: ${{ inputs.dependency-version }}
         run: |
-          CMD="${{ inputs.dependency-install-command }}"
-          CMD="${CMD/\{version\}/${{ inputs.dependency-version }}}"
+          CMD="${INSTALL_COMMAND/\{version\}/$DEP_VERSION}"
           eval "$CMD"
 
       - name: Run tests

@@ -1,0 +1,102 @@
+name: Release — tag and create the prerelease
+
+# The approval gate, and the point of no return.
+#
+# Second of four. `environment` is what makes this sit pending until a required
+# reviewer approves it -- that is the in-flow confirmation, replacing the old
+# "a human clicks Publish on a draft". By the time it is reached, prepare has
+# shown the version and the notes in the job summary and the caller's own lint
+# and build jobs have gone green, so the reviewer approves something already
+# verified rather than a version string.
+#
+# The release is created as a PRERELEASE, not a draft. Both hide it from
+# /releases/latest, but a draft is invisible to the verification too --
+# /releases/tags/<tag> 404s for an unauthenticated fetch -- so there would be
+# nothing for the downstream jobs to check. A prerelease is publicly readable by
+# exact tag while no consumer polling /releases/latest can see it.
+#
+# Environment protection rules are free on public repositories; the paid tier
+# applies to private ones only.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "The version resolved by common-release-prepare.yml."
+        required: true
+        type: string
+      ref:
+        description: "Branch to tag. Empty = the branch the caller was dispatched on."
+        required: false
+        type: string
+        default: ""
+      environment:
+        description: "GitHub environment whose reviewers gate the release."
+        required: false
+        type: string
+        default: "stable"
+    outputs:
+      url:
+        description: "URL of the created prerelease."
+        value: ${{ jobs.tag.outputs.url }}
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    name: tag and create the prerelease
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.create.outputs.url }}
+    permissions:
+      contents: write
+    outputs:
+      url: ${{ steps.create.outputs.url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-notes
+
+      - name: Create and push the tag
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$VERSION"
+          # persist-credentials: false means `origin` has no auth; push to an
+          # explicit tokenised URL rather than leaving one in .git/config.
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$VERSION"
+
+      # Every release starts life as a prerelease, including one that is destined
+      # to become latest. Promotion is a separate, later step -- see
+      # common-release-promote.yml.
+      - name: Create the prerelease
+        id: create
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          URL=$(gh release create "$VERSION" \
+            --title "$VERSION" \
+            --notes-file NOTES.md \
+            --prerelease)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Prerelease created"
+            echo ""
+            echo "\`$VERSION\` — $URL"
+            echo ""
+            echo "Not yet visible to anything that polls \`/releases/latest\`, which excludes prereleases."
+          } >> "$GITHUB_STEP_SUMMARY"

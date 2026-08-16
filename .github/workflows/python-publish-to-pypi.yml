@@ -1,0 +1,79 @@
+name: Publish to PyPI
+
+# Replaces the near-identical python-publish-to-python.yml and
+# python-publish-to-python-test.yml. The two differed only in the repository URL,
+# the environment and skip-existing, which is what `target` selects -- the same
+# pattern java-publish-to-gradle.yml already uses.
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "pypi (the real index) or testpypi."
+        required: false
+        type: string
+        default: "pypi"
+      dry-run:
+        description: "Run twine check instead of uploading."
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: "GitHub environment to deploy to. Empty = derived from target."
+        required: false
+        type: string
+        default: ""
+      artifact:
+        description: "Name of the build artifact holding the distributions."
+        required: false
+        type: string
+        default: "dist"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment != '' && inputs.environment || (inputs.target == 'testpypi' && 'test' || 'prod') }}
+      url: ${{ inputs.target == 'testpypi' && 'https://test.pypi.org' || 'https://pypi.org' }}
+    permissions:
+      id-token: write # trusted publishing (OIDC) — no API token stored
+    steps:
+      - name: Reject an unknown target
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          case "$TARGET" in
+            pypi|testpypi) ;;
+            *) echo "::error::target must be 'pypi' or 'testpypi' (got: '$TARGET')"; exit 1 ;;
+          esac
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.artifact }}
+          path: dist
+
+      - name: Dry-run — validate artifacts
+        if: ${{ inputs.dry-run }}
+        run: |
+          pip install --quiet twine
+          twine check --strict dist/*
+
+      - name: Publish to Test PyPI
+        if: ${{ !inputs.dry-run && inputs.target == 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          attestations: true
+          # A re-run after a downstream failure must not fail on the upload that
+          # already succeeded. Not set for the real index, where a silent no-op
+          # would hide a version collision.
+          skip-existing: true
+
+      - name: Publish to PyPI
+        if: ${{ !inputs.dry-run && inputs.target == 'pypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true

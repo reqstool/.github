@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - ".github/workflows/**"
+      - ".github/actions/**"
       - "tests/**"
   pull_request:
     paths:
       - ".github/workflows/**"
+      - ".github/actions/**"
       - "tests/**"
 
 permissions:
@@ -19,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install actionlint
         run: |
@@ -37,95 +41,42 @@ jobs:
       - name: actionlint
         run: actionlint .github/workflows/*.yml
 
+      # No `|| true`: these workflows hold contents: write and feed package
+      # registries, so a finding is a failure, not a report. The one deliberate
+      # deviation from zizmor's defaults is recorded in .github/zizmor.yml.
       - name: zizmor
-        run: zizmor --format sarif .github/workflows/ > zizmor.sarif || true
+        run: zizmor --config .github/zizmor.yml .github/workflows/ .github/actions/
 
       - name: yamllint
         run: |
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 200}}}" \
-            .github/workflows/
+            .github/workflows/ .github/actions/ tests/
 
-  test-check-release:
-    name: Test — common-check-release
+      # shellcheck ships on GitHub-hosted runners.
+      - name: shellcheck
+        run: shellcheck .github/actions/*/*.sh tests/actions/*.sh
+
+  test-actions:
+    name: Test — composite actions
     needs: lint
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        fixture:
-          - valid-semver
-          - invalid-semver
-          - valid-pep440
-          - invalid-pep440
-          - valid-maven
-          - not-a-tag
-          - wrong-branch
-          - hotfix-branch
-          - release-branch
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Install act
-        run: |
-          VERSION="0.2.74"
-          curl -fsSL \
-            "https://github.com/nektos/act/releases/download/v${VERSION}/act_Linux_x86_64.tar.gz" \
-            | tar -xz act
-          sudo mv act /usr/local/bin/
-          mkdir -p ~/.config/act
-          echo "-P ubuntu-latest=node:20-bullseye-slim" > ~/.config/act/actrc
+      # Exercises the shell behind check-version, check-release-branch and
+      # next-prerelease directly. This replaced an act-driven matrix over
+      # common-check-release.yml: once that workflow delegated to composite
+      # actions addressed as `reqstool/.github/...@main`, act resolved them
+      # against main rather than the branch under test, so a PR changing the
+      # rules was validated against the rules it was replacing.
+      - name: Run the action test suite
+        run: bash tests/actions/run-tests.sh
 
-      - name: Read fixture
-        id: fixture
-        run: |
-          FIXTURE="tests/common/check-release/${{ matrix.fixture }}.json"
-          EXPECTED=$(jq -r '.expected_exit' "$FIXTURE")
-          GITHUB_REF=$(jq -r '.github_ref' "$FIXTURE")
-          VERSION_FORMAT=$(jq -r '.inputs["version-format"]' "$FIXTURE")
-          TARGET_COMMITISH=$(jq -r '.event.release.target_commitish' "$FIXTURE")
-          {
-            echo "expected=$EXPECTED"
-            echo "github_ref=$GITHUB_REF"
-            echo "version_format=$VERSION_FORMAT"
-            echo "target_commitish=$TARGET_COMMITISH"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Build event payload
-        run: |
-          jq -n \
-            --arg commitish "${{ steps.fixture.outputs.target_commitish }}" \
-            --arg fmt "${{ steps.fixture.outputs.version_format }}" \
-            '{"release": {"target_commitish": $commitish}, "inputs": {"version-format": $fmt}}' \
-            > /tmp/event.json
-
-      - name: Run act
-        id: act
-        continue-on-error: true
-        run: |
-          REF="${{ steps.fixture.outputs.github_ref }}"
-          REF_NAME=$(echo "$REF" | sed 's|refs/tags/||;s|refs/heads/||')
-          act workflow_call \
-            -W .github/workflows/common-check-release.yml \
-            --eventpath /tmp/event.json \
-            --env "GITHUB_REF=$REF" \
-            --env "GITHUB_REF_NAME=$REF_NAME" \
-            --no-cache-server \
-            -q
-
-      - name: Assert outcome
-        run: |
-          ACT_EXIT=${{ steps.act.outcome == 'success' && '0' || '1' }}
-          EXPECTED="${{ steps.fixture.outputs.expected }}"
-          if [ "$ACT_EXIT" != "$EXPECTED" ]; then
-            echo "::error::Fixture '${{ matrix.fixture }}': expected exit $EXPECTED but got $ACT_EXIT"
-            exit 1
-          fi
-          echo "Fixture '${{ matrix.fixture }}': exit $ACT_EXIT — PASS"
-
-  # tests/common/release.yml and tests/common/release-preview.yml are validated
-  # by actionlint above. act-based execution is skipped here because act does not
-  # propagate with: inputs into nested workflow_call, and release-preview requires
-  # curl which is absent from the micro image. Both workflows are exercised
+  # tests/common/*.yml and tests/{java,python,typescript}/*.yml are validated by
+  # actionlint above. act-based execution is not attempted: act does not
+  # propagate `with:` inputs into a nested workflow_call, and a reusable workflow
+  # that references this repo's own composite actions can only address them at
+  # @main, which is not what a PR is testing. The workflows are exercised
   # end-to-end in the per-repo migration PRs.

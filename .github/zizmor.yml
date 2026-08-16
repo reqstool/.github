@@ -1,0 +1,29 @@
+# zizmor runs without `|| true` in ci.yml, so every finding here is a build
+# failure. This file records the one deliberate deviation from its defaults.
+#
+# `unpinned-uses` defaults to demanding a commit hash for every action. This org
+# pins to major version tags instead and lets Renovate carry the bumps
+# (.github/renovate.json5 auto-merges `github-actions` updates once checks pass);
+# hash pins would take that automation away and replace it with a digest bump per
+# action per week. Switching to hash pins is a reasonable call, but it is an
+# org-wide policy change that has to land with the matching Renovate config --
+# not a side effect of a release-flow PR.
+#
+# `ref-pin` still fails on the genuinely dangerous form: an action tracking a
+# mutable branch. The exception is this repository's own composite actions, which
+# a reusable workflow can only address as `@main` -- it cannot name its own ref.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        reqstool/.github: any
+        "*": ref-pin
+
+  # These two install a version pinned in the workflow rather than in a lockfile,
+  # because a reusable workflow has no lockfile of its own to commit -- it runs
+  # against arbitrary caller repositories. build-antora-site does use `npm ci`
+  # when the caller has a lockfile; this is the fallback for callers that don't.
+  adhoc-packages:
+    ignore:
+      - action.yml
+      - common-validate-openspec.yml

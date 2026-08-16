@@ -1,0 +1,46 @@
+name: Setup cliff config
+description: Resolve which cliff.toml to use and write it to a known path.
+
+inputs:
+  config:
+    description: "Path to a cliff.toml in the calling repo. Empty = repo root, then the org default."
+    required: false
+    default: ""
+  destination:
+    description: "Where to write the resolved config."
+    required: false
+    default: "/tmp/cliff.toml"
+
+outputs:
+  path:
+    description: "Path to the resolved cliff.toml."
+    value: ${{ inputs.destination }}
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        DEST: ${{ inputs.destination }}
+      run: |
+        set -euo pipefail
+        if [ -n "$CONFIG" ]; then
+          # An explicitly requested config that isn't there is a mistake, not a
+          # cue to silently fall back to the org default and release with the
+          # wrong bump rules.
+          if [ ! -f "$CONFIG" ]; then
+            echo "::error::cliff-config '$CONFIG' does not exist."
+            exit 1
+          fi
+          cp "$CONFIG" "$DEST"
+          echo "Using '$CONFIG'."
+        elif [ -f "cliff.toml" ]; then
+          cp cliff.toml "$DEST"
+          echo "Using the repo's own cliff.toml."
+        else
+          curl -fsSL \
+            "https://raw.githubusercontent.com/reqstool/.github/main/.github/cliff.toml" \
+            -o "$DEST"
+          echo "Using the org default from reqstool/.github."
+        fi

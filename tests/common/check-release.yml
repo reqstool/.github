@@ -4,8 +4,12 @@ on:
   workflow_call:
 
 # Happy-path tests for .github/workflows/common-check-release.yml.
-# Failure-path tests (invalid tag, wrong branch, not-a-tag) are exercised by
-# ci.yml via act with event fixtures in tests/common/check-release/*.json.
+# The rules it enforces are tested directly by tests/actions/run-tests.sh, which
+# runs the scripts behind check-version and check-release-branch over both the
+# accept and the reject cases.
+
+permissions:
+  contents: read
 
 jobs:
   valid-semver:

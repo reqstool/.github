@@ -1,0 +1,60 @@
+name: Release — promote to latest
+
+# Last of four. The moment the release becomes real: one flag flip, with the
+# artifacts already in place, so there is no window in which /releases/latest
+# returns a release whose assets have not landed yet.
+#
+# A release candidate skips the flip and nothing else. Gated per *step* rather
+# than by skipping the job, because a skipped job cascades through every
+# `needs: promote` downstream of it.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "The version to promote."
+        required: true
+        type: string
+      prerelease:
+        description: "true leaves it as a prerelease permanently (a release candidate)."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    name: promote to latest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Promote the prerelease
+        if: ${{ !inputs.prerelease }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release edit "$VERSION" --repo "$REPO" --prerelease=false --latest
+          {
+            echo "### Released"
+            echo ""
+            echo "\`$VERSION\` is now the latest release."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Leave it as a prerelease
+        if: ${{ inputs.prerelease }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          {
+            echo "### Release candidate published"
+            echo ""
+            echo "\`$VERSION\` stays a prerelease. \`/releases/latest\` is unchanged, so nothing"
+            echo "that resolves the latest release is offered it."
+            echo ""
+            echo "Cut the real release by running the Release workflow again with \`prerelease: none\`."
+          } >> "$GITHUB_STEP_SUMMARY"
