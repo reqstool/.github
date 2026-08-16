@@ -64,10 +64,28 @@ Tags carry no `v` prefix, in any ecosystem.
 7. The project is rebuilt *from the tag* — which is what gives the artifacts their version
    — and those artifacts are checked and attached to the prerelease.
 
+   The Java repos skip this step: `mvn deploy` and `./gradlew publishPlugins` build from the
+   tag themselves, so there is nothing to rebuild and nothing to attach twice. The check
+   still happens, as an assertion inside the publish step that the resolved version equals
+   the tag. Their GitHub releases therefore carry no jars — Maven Central and the Plugin
+   Portal are the distribution channel.
+
 8. The artifacts are published to the registry.
 
 9. Only then is the prerelease promoted to the latest release. **A release candidate stops
    at step 8 instead**, staying a prerelease permanently.
+
+Promotion is deliberately last: until it runs, nothing resolving "the latest release" can
+see what was built, so every step that can fail has already succeeded by the time anyone is
+served it. Promotion itself is one API call against a release that already has its
+artifacts.
+
+### One-time setup
+
+The gate in step 5 needs a `stable` environment with a required reviewer, and the staging
+publishes need a `test` environment. Both are declared for every repo in
+`reqstool/.github-private`'s safe-settings config — **without them the approval step is
+inert and a release runs straight through.**
 
 ### Why a prerelease rather than a draft
 
