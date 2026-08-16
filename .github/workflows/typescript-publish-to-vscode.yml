@@ -38,11 +38,6 @@ on:
         required: false
         type: string
         default: "open-vsx,vscode-marketplace"
-      upload-to-release:
-        description: "Attach the VSIX to the release named by `version`."
-        required: false
-        type: boolean
-        default: false
     secrets:
       OPEN_VSX_TOKEN:
         required: false
@@ -56,8 +51,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    # read, not write: the release flow attaches the VSIX via
+    # common-release-assets.yml before this runs, so nothing here writes to the
+    # release. A dry-run caller could not grant write without over-privileging
+    # a packaging check.
     permissions:
-      contents: write
+      contents: read
     steps:
       # `ref` is caller-supplied and this job runs the project's build with
       # publish credentials, so constrain it before the checkout. Not
@@ -128,12 +127,3 @@ jobs:
           registryUrl: https://marketplace.visualstudio.com
           extensionFile: ${{ steps.vsix.outputs.path }}
           dryRun: ${{ inputs.dry-run }}
-
-      - name: Upload VSIX to GitHub Release
-        if: ${{ !inputs.dry-run && (inputs.upload-to-release || github.event_name == 'release') }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.version || github.ref_name }}
-          VSIX: ${{ steps.vsix.outputs.path }}
-          REPO: ${{ github.repository }}
-        run: gh release upload "$TAG" "$VSIX" --repo "$REPO" --clobber
