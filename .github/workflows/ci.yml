@@ -84,6 +84,13 @@ jobs:
       - name: Run the action test suite
         run: bash tests/actions/run-tests.sh
 
+      # A caller granting exactly what the jobs need must not be refused. See the
+      # script for why this specific shape is worth a test.
+      - name: Check reusable workflow permissions
+        run: |
+          pip install --quiet pyyaml
+          python3 tests/actions/check-permissions.py
+
   # Proves the `$/` self-repository syntax actually resolves on a runner, rather
   # than only that actionlint and zizmor tolerate it. Worth its own job: `$/` is
   # new (2026-07-30), needs runner 2.336.0+, and every release workflow depends

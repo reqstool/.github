@@ -29,8 +29,11 @@ on:
         type: string
         default: "dist"
 
-permissions:
-  contents: read
+# Nothing here reads the repository -- there is no checkout, only an artifact
+# download and the upload. Declaring `contents: read` made this workflow request
+# more than callers granting only `id-token: write`, which is rejected before any
+# job runs.
+permissions: {}
 
 jobs:
   publish:

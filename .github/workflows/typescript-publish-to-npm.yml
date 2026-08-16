@@ -39,14 +39,17 @@ on:
         type: string
         default: ""
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
+      # Both listed here on purpose: a job-level block replaces the
+      # workflow-level one rather than merging with it, so naming only id-token
+      # would leave the checkout below running with `contents: none`.
+      contents: read
       id-token: write
     defaults:
       run:
