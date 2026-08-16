@@ -66,11 +66,11 @@ jobs:
       # differently -- by mistake or otherwise -- would reach a checkout with
       # contents: write on an unvalidated ref. Cheap to re-check where it
       # matters; these actions need no checkout of their own.
-      - uses: reqstool/.github/.github/actions/check-release-branch@main
+      - uses: $/.github/actions/check-release-branch
         with:
           ref: ${{ inputs.ref || github.ref }}
 
-      - uses: reqstool/.github/.github/actions/check-version@main
+      - uses: $/.github/actions/check-version
         with:
           version: ${{ inputs.version }}
           version-format: ${{ inputs.version-format }}

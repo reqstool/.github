@@ -50,7 +50,7 @@ jobs:
 
       # Same action common-build-docs.yml uses, so what is validated on a PR and
       # what is published are built by the same Antora.
-      - uses: reqstool/.github/.github/actions/build-antora-site@main
+      - uses: $/.github/actions/build-antora-site
         with:
           playbook: ${{ inputs.antora-playbook }}
 

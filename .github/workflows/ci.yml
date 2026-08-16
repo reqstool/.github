@@ -38,8 +38,18 @@ jobs:
       - name: Install yamllint
         run: pip install yamllint
 
+      # The ignore covers exactly one thing: actionlint does not yet know the
+      # `$/` self-repository syntax GitHub shipped on 2026-07-30, and rejects it
+      # as a malformed `uses:`. Tracked upstream as rhysd/actionlint#711 --
+      # delete this flag once a release lands with support.
+      #
+      # Scoped to the message rather than the file, so a genuinely unpinned
+      # action (`uses: actions/checkout` with no ref) still fails.
       - name: actionlint
-        run: actionlint .github/workflows/*.yml
+        run: |
+          actionlint \
+            -ignore 'specifying action "\$/.+" in invalid format because ref is missing' \
+            .github/workflows/*.yml
 
       # No `|| true`: these workflows hold contents: write and feed package
       # registries, so a finding is a failure, not a report. The one deliberate

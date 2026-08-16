@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - uses: reqstool/.github/.github/actions/build-antora-site@main
+      - uses: $/.github/actions/build-antora-site
         with:
           playbook: ${{ inputs.antora-playbook }}
           log-failure-level: ${{ inputs.log-failure-level }}

@@ -172,17 +172,26 @@ prepare  (dry-run stops here)
 `common-check-release.yml` is separate: it guards a release created by hand in the UI,
 enforcing the same tag-format and branch rules the flow enforces before tagging.
 
-### A note on `@main`
+### A note on `$/`
 
 The reusable workflows above reference this repository's composite actions as
-`reqstool/.github/.github/actions/…@main`. A reusable workflow cannot address its own
-repository at the ref it was called with, and `./` would resolve against the *caller's*
-checkout. So a caller that pins a workflow by SHA still picks up whatever the actions are at
-`main`. Keep changes to those actions backward-compatible.
+`$/.github/actions/…`. That is [self-repository
+syntax](https://github.blog/changelog/2026-07-30-reference-same-repository-actions-with-self-repository-syntax/):
+it resolves to *this* repository at the exact commit running, not the caller's checkout,
+which is where a workspace-relative `./` would look. A caller that pins a workflow by SHA
+therefore gets the actions at that same SHA, and the two cannot drift apart.
 
-For the same reason, the rules those actions enforce are tested by
-`tests/actions/run-tests.sh`, which runs the scripts directly — a PR is then tested by the
-PR rather than by whatever `main` holds.
+Two consequences worth knowing:
+
+- **actionlint does not understand `$/` yet** and rejects it as a malformed `uses:`
+  ([rhysd/actionlint#711](https://github.com/rhysd/actionlint/issues/711)). `ci.yml` passes a
+  message-scoped `-ignore` for exactly that error; drop it once upstream lands support. A
+  genuinely unpinned action still fails the lint.
+- **It needs runner 2.336.0 or newer** and is not available on GitHub Enterprise Server.
+  Both are fine for GitHub-hosted runners on github.com.
+
+The rules those actions enforce are tested by `tests/actions/run-tests.sh`, which runs the
+scripts directly rather than through a workflow — so a PR is tested by the PR.
 
 ## Commit type → changelog section
 

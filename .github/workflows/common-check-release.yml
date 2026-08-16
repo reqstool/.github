@@ -28,11 +28,11 @@ jobs:
             *) echo "::error::Expected a tag ref (refs/tags/...) but got: $REF"; exit 1 ;;
           esac
 
-      - uses: reqstool/.github/.github/actions/check-version@main
+      - uses: $/.github/actions/check-version
         with:
           version: ${{ github.ref_name }}
           version-format: ${{ inputs.version-format }}
 
-      - uses: reqstool/.github/.github/actions/check-release-branch@main
+      - uses: $/.github/actions/check-release-branch
         with:
           ref: ${{ github.event.release.target_commitish }}

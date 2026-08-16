@@ -7,10 +7,10 @@ name: Release — prepare
 # First of four. See RELEASING.md for the whole shape, and for why the release is
 # created as a prerelease rather than a draft.
 #
-# The composite actions below are referenced at @main rather than at this file's
-# own ref: a reusable workflow cannot address its own repository at the ref it
-# was called with, and `./` would resolve against the *caller's* checkout. A
-# caller pinning this workflow by SHA still gets whatever the actions are at main.
+# The composite actions below use `$/`, which resolves to this repository at the
+# exact commit running -- not the caller's checkout, which is where `./` would
+# look. So a caller that pins this workflow by SHA gets the actions at that same
+# SHA, and the two cannot drift apart.
 
 on:
   workflow_call:
@@ -81,11 +81,11 @@ jobs:
       # that may not be released from should not reach a checkout at all -- the
       # config and the commit history pulled in below both feed git-cliff.
       # Neither action needs a checkout of its own.
-      - uses: reqstool/.github/.github/actions/check-release-branch@main
+      - uses: $/.github/actions/check-release-branch
         with:
           ref: ${{ inputs.ref || github.ref }}
 
-      - uses: reqstool/.github/.github/actions/check-version@main
+      - uses: $/.github/actions/check-version
         with:
           version: ${{ inputs.version }}
           version-format: ${{ inputs.version-format }}
@@ -97,9 +97,9 @@ jobs:
           fetch-tags: true
           ref: ${{ inputs.ref || github.ref }}
 
-      - uses: reqstool/.github/.github/actions/setup-git-cliff@main
+      - uses: $/.github/actions/setup-git-cliff
 
-      - uses: reqstool/.github/.github/actions/setup-cliff-config@main
+      - uses: $/.github/actions/setup-cliff-config
         with:
           config: ${{ inputs.cliff-config }}
 
@@ -115,7 +115,7 @@ jobs:
           PREV="$(git tag --list --sort=-version:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)"
           echo "tag=$PREV" >> "$GITHUB_OUTPUT"
 
-      - uses: reqstool/.github/.github/actions/resolve-version@main
+      - uses: $/.github/actions/resolve-version
         id: resolve
         with:
           version: ${{ inputs.version }}
@@ -125,7 +125,7 @@ jobs:
 
       # The input is validated above; this validates what was *computed* from it,
       # which until now nothing did.
-      - uses: reqstool/.github/.github/actions/check-version@main
+      - uses: $/.github/actions/check-version
         with:
           version: ${{ steps.resolve.outputs.version }}
           version-format: ${{ inputs.version-format }}
