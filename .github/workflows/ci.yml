@@ -78,11 +78,53 @@ jobs:
       # Exercises the shell behind check-version, check-release-branch and
       # next-prerelease directly. This replaced an act-driven matrix over
       # common-check-release.yml: once that workflow delegated to composite
-      # actions addressed as `reqstool/.github/...@main`, act resolved them
-      # against main rather than the branch under test, so a PR changing the
-      # rules was validated against the rules it was replacing.
+      # actions, act resolved them against main rather than the branch under
+      # test, so a PR changing the rules was validated against the rules it was
+      # replacing.
       - name: Run the action test suite
         run: bash tests/actions/run-tests.sh
+
+  # Proves the `$/` self-repository syntax actually resolves on a runner, rather
+  # than only that actionlint and zizmor tolerate it. Worth its own job: `$/` is
+  # new (2026-07-30), needs runner 2.336.0+, and every release workflow depends
+  # on it from its first step -- a syntax that silently failed to resolve would
+  # surface as a broken release rather than a broken CI run.
+  #
+  # It also proves resolution is to *this commit* and not to main: on a PR that
+  # adds an action, main has no copy of it, so resolving at all means resolving
+  # here.
+  test-self-repository-syntax:
+    name: Test — $/ resolves to this commit
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show the runner version
+        run: echo "$RUNNER_NAME on $(cat /home/runner/runners/*/.runner 2>/dev/null | head -1 || echo 'version unknown')"
+
+      # No checkout: `$/` resolves without one, which is part of what is claimed.
+      - name: A valid version passes
+        uses: $/.github/actions/check-version
+        with:
+          version: "1.2.3rc1"
+          version-format: pep440
+
+      - name: An invalid version is rejected
+        id: reject
+        continue-on-error: true
+        uses: $/.github/actions/check-version
+        with:
+          version: "not-a-version"
+          version-format: pep440
+
+      - name: Assert the rejection actually happened
+        env:
+          OUTCOME: ${{ steps.reject.outcome }}
+        run: |
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "::error::check-version accepted 'not-a-version' — the action resolved but does not work"
+            exit 1
+          fi
+          echo "\$/ resolved to this commit and the action behaves correctly."
 
   # tests/common/*.yml and tests/{java,python,typescript}/*.yml are validated by
   # actionlint above. act-based execution is not attempted: act does not
