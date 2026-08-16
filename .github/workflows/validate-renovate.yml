@@ -12,6 +12,13 @@ permissions: {}
 
 jobs:
   validate:
+    # `permissions: {}` above grants this job nothing, and common-validate-renovate.yml
+    # declares `contents: read` -- a called workflow may not request more than its
+    # caller was granted, so without this the run is rejected before any job starts.
+    # It produces no check run when that happens, which is why every run of this
+    # workflow since May 2026 has been a silent startup_failure.
+    permissions:
+      contents: read
     uses: ./.github/workflows/common-validate-renovate.yml
     with:
       config-path: .github/renovate.json5
