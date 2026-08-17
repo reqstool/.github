@@ -39,7 +39,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ inputs.environment != '' && inputs.environment || (inputs.target == 'testpypi' && 'test' || 'prod') }}
+      # `stable`, not `prod`: `prod` was declared nowhere, and GitHub creates a
+      # missing environment with no protection rules -- so the irreversible
+      # upload was the one step running unguarded.
+      name: ${{ inputs.environment != '' && inputs.environment || (inputs.target == 'testpypi' && 'test' || 'stable') }}
       url: ${{ inputs.target == 'testpypi' && 'https://test.pypi.org' || 'https://pypi.org' }}
     permissions:
       id-token: write # trusted publishing (OIDC) — no API token stored

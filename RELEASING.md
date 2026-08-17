@@ -53,56 +53,76 @@ Tags carry no `v` prefix, in any ecosystem.
    - **`prerelease`** — leave at `none` for a real release. See
      [Cutting a release candidate](#cutting-a-release-candidate).
 
-4. Lint and the full build run, so what you approve next is already green.
+4. Lint and the full build run, so nothing is tagged off a red branch.
 
-5. **The run pauses for approval.** The job that tags is bound to the `stable` environment,
-   so it sits pending until a required reviewer approves it on the run page. There is no
-   draft to publish by hand — this is the confirmation step.
+5. It tags the ref and creates the GitHub Release **as a prerelease** — invisible to anything
+   resolving the latest release, and reversible.
 
-6. On approval it tags the ref and creates the GitHub Release **as a prerelease**.
+6. The project is rebuilt *from the tag* — which is what gives the artifacts their version —
+   and those artifacts are checked and attached to the prerelease. The staging publish
+   (Test PyPI) happens here too, ungated.
 
-7. The project is rebuilt *from the tag* — which is what gives the artifacts their version
-   — and those artifacts are checked and attached to the prerelease.
+   The Java repos skip the rebuild: `mvn deploy` and `./gradlew publishPlugins` build from the
+   tag themselves, so there is nothing to rebuild and nothing to attach twice. The check still
+   happens, as an assertion inside the publish step that the resolved version equals the tag.
+   Their GitHub releases therefore carry no jars — Maven Central and the Plugin Portal are the
+   distribution channel.
 
-   The Java repos skip this step: `mvn deploy` and `./gradlew publishPlugins` build from the
-   tag themselves, so there is nothing to rebuild and nothing to attach twice. The check
-   still happens, as an assertion inside the publish step that the resolved version equals
-   the tag. Their GitHub releases therefore carry no jars — Maven Central and the Plugin
-   Portal are the distribution channel.
+7. **The run pauses for approval.** The job that publishes to the real index is bound to the
+   `stable` environment, so it sits pending until a required reviewer approves it. There is no
+   draft to publish by hand — this is the confirmation step, and it sits here rather than
+   earlier because publishing and promoting are the only steps that cannot be undone. By this
+   point the artifacts exist, their version has been asserted against the tag, and the staging
+   publish has either succeeded or stopped the run.
 
-8. The artifacts are published to the registry.
-
-9. Only then is the prerelease promoted to the latest release. **A release candidate stops
-   at step 8 instead**, staying a prerelease permanently.
+8. On approval the artifacts go to the real index, and the prerelease is promoted to the
+   latest release. **A release candidate stops before step 7 instead**, staying a prerelease
+   permanently — everything it did was reversible, so it needs no approval.
 
 Promotion is deliberately last: until it runs, nothing resolving "the latest release" can
 see what was built, so every step that can fail has already succeeded by the time anyone is
 served it. Promotion itself is one API call against a release that already has its
 artifacts.
 
-### One-time setup
+### The two environments
 
-The gate in step 5 needs a `stable` environment with a required reviewer, and the staging
-publishes need a `test` environment. Both are declared for every repo in
-`reqstool/.github-private`'s safe-settings config — **without them the approval step is
-inert and a release runs straight through.**
+Both declared for every repo in `reqstool/.github-private`'s safe-settings config —
+**without them the approval is inert and a release runs straight through**, because GitHub
+creates a missing environment on demand with no protection rules.
 
-### Why a prerelease rather than a draft
+| Environment | Holds | Reviewer |
+|---|---|---|
+| `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces — and, downstream of it, promotion to latest. | **required** |
+| `test` | The non-stable index, e.g. Test PyPI. A dev build lands there on every push to main. | none |
 
-The release has to be verifiable before anyone can reach it, and those two pull in opposite
-directions. A draft is invisible to the verification too — `/releases/tags/<tag>` returns
-404 to an unauthenticated fetch — so there would be nothing to check.
+**The approval is on the publish, not on the tag.** That is deliberate, and it is the
+opposite of where an earlier version of this flow put it. Everything before the publish is
+reversible and invisible: a tag can be deleted, and the release is a prerelease, which
+`/releases/latest` excludes. Approving `stable` gates the two things that cannot be taken
+back — the upload to a real index, and promotion to latest, which is the moment a release
+becomes the one people get.
 
-A prerelease is readable by exact tag, but `/releases/latest` excludes it. So the release is
-fully testable while staying invisible to anything resolving "the latest release", until
-step 9.
+Approving there also means approving with more to go on. By then the artifacts exist, their
+version has been asserted against the tag, and the test-index publish has either succeeded or
+stopped the run. Gating the tag job instead would mean approving a version string and a green
+build, before any of that.
 
-If something fails in between, the release stays a prerelease: nobody was served it. The tag
-and prerelease are left in place for a human to delete or supersede — fixing forward with a
-patch version is usually cleaner than deleting a pushed tag.
+`test` has no reviewer on purpose: a dev build lands there on every push to main, and a gate
+would mean approving each one by hand. This matches
+[PyPI's own guidance](https://docs.pypi.org/trusted-publishers/security-model/), which asks
+for manual approval on the environment that publishes to PyPI and says a gate on the test
+environment is unnecessary.
 
-This also closes a window the old flow had: artifacts were attached *after* publication, so
-for a short time the release existed with nothing to download.
+One consequence worth knowing: because nothing gates the tag, abandoning a release leaves a
+tag and a prerelease behind. Delete them, or fix forward with a patch version — usually the
+cleaner option, as below.
+
+> **These names are load-bearing for PyPI.** Trusted publishing matches the OIDC claims
+> *exactly*, environment included — so a project whose trusted publisher names a different
+> environment than the workflow uses is rejected with an invalid-publisher error, at the
+> upload, after everything else has succeeded. When adding a project, the environment on
+> pypi.org (project → Publishing) must read `stable`, and on test.pypi.org `test`. The same
+> applies to any other registry that binds an OIDC identity to an environment name.
 
 ## Cutting a release candidate
 
