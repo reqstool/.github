@@ -10,10 +10,12 @@ inputs:
   antora-version:
     description: "@antora/cli and @antora/site-generator version."
     required: false
+    # renovate: datasource=npm depName=@antora/cli
     default: "3.1.14"
   kroki-version:
     description: "asciidoctor-kroki version."
     required: false
+    # renovate: datasource=npm depName=asciidoctor-kroki
     default: "0.18.1"
   playbook:
     description: "Path to the Antora playbook."
