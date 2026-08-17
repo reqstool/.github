@@ -27,5 +27,8 @@ runs:
         if [ "$REQSTOOL_SOURCE" = "main" ]; then
           pip install "reqstool @ git+https://github.com/reqstool/reqstool-client.git@main"
         else
+          # Deliberately unpinned. The build matrix runs this with
+          # reqstool-source: [pypi, main] precisely to test against whatever
+          # reqstool currently releases; pinning would defeat the check.
           pip install reqstool
         fi
