@@ -6,6 +6,15 @@
     ":semanticCommits",
   ],
 
+  // Every dependency is pinned to an exact version, in every repo. A range means
+  // the version you get depends on when you install: CI, a laptop and a release
+  // build can each resolve differently, and a bad upstream release lands without
+  // a PR anyone reviewed. Pinning turns each upgrade into a reviewable PR that CI
+  // has to pass -- which is the point, not extra noise.
+  //
+  // Renovate raises "Pin dependencies" PRs for anything that regresses to a range.
+  rangeStrategy: "pin",
+
   semanticCommits: "enabled",
   semanticCommitType: "chore",
   semanticCommitScope: "{{datasource}}",
