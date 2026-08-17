@@ -89,13 +89,25 @@ GitHub creates a missing environment on demand with no protection rules.
 | Environment | Gates | Reviewer |
 |---|---|---|
 | `release` | Creating the tag and the prerelease. Runs for a release candidate too. | required |
-| `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces. Only a final release reaches it. | required |
+| `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces. Only a final release reaches it. | none |
 | `test` | Staging publishes, e.g. Test PyPI. | none — a dev build lands there on every push to main |
 
-Two of these are **channels** — where an artifact lands — and one is a **gate**. `release`
-is not a publish target: it is the human "cut it" decision, and it has to happen before a tag
-exists, which is why it cannot be folded into either channel. A release candidate goes
-`release` → `test` and stops; a final release goes `release` → `test` → `stable`.
+All three are ordinary GitHub environments; they differ only in which of an environment's
+features they are there for. `release` exists for its **protection rule** — a required
+reviewer is what makes a job pause. `stable` and `test` exist to **scope the publish
+credentials** and to supply the **OIDC `environment` claim** that a registry matches on; they
+do not pause anything.
+
+So there is exactly one approval, and it is at the point where the decision is actually made
+— before a tag exists, which is why it cannot be folded into either of the other two. A
+release candidate goes `release` → `test` and stops; a final release goes `release` → `test`
+→ `stable`.
+
+`stable` deliberately has no reviewer. Everything between the approval and the publish is
+automated verification that either passed or stopped the run, so a second prompt would arrive
+with nothing new to judge — and a prompt you always click through teaches you to click
+through the one that matters. Adding a reviewer there is a one-line change if a release ever
+proves otherwise.
 
 > **These names are load-bearing for PyPI.** Trusted publishing matches the OIDC claims
 > *exactly*, environment included — so a project whose trusted publisher names a different
