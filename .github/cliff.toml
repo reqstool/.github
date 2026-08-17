@@ -27,6 +27,14 @@ filter_unconventional = true
 
 # Security first, not alphabetical: "is there a fix I need" outranks "what's new".
 commit_parsers = [
+  # Scope first, before the type rules below: `fix(ci):` is a fix *to CI*, not a
+  # fix users can observe, and matching on `^fix` alone would file it under Bug
+  # Fixes. Only the `ci`/`build` *types* were skipped before, so a CI change
+  # typed `fix(ci)` or `refactor(ci)` was advertised as a user-facing change --
+  # four of them in reqstool-python-decorators' first generated changelog.
+  { message = "^[a-z]+\\(ci\\)", skip = true },
+  { message = "^[a-z]+\\(build\\)", skip = true },
+
   { message = "^security", group = "<!-- 0 -->Security" },
   { message = "^feat", group = "<!-- 1 -->Features" },
   { message = "^fix", group = "<!-- 2 -->Bug Fixes" },
