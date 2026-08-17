@@ -25,7 +25,9 @@ jobs:
         env:
           CONFIG_PATH: ${{ inputs.config-path }}
         run: |
+          # renovate: datasource=docker depName=renovate/renovate
+          VERSION="44.32.5"
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/repo" \
-            renovate/renovate \
+            "renovate/renovate:$VERSION" \
             renovate-config-validator "/repo/$CONFIG_PATH"

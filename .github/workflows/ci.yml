@@ -34,10 +34,12 @@ jobs:
           sudo mv actionlint /usr/local/bin/
 
       - name: Install zizmor
-        run: pip install zizmor
+        # renovate: datasource=pypi depName=zizmor
+        run: pip install zizmor==1.29.0
 
       - name: Install yamllint
-        run: pip install yamllint
+        # renovate: datasource=pypi depName=yamllint
+        run: pip install yamllint==1.38.0
 
       # The ignore covers exactly one thing: actionlint does not yet know the
       # `$/` self-repository syntax GitHub shipped on 2026-07-30, and rejects it
@@ -89,7 +91,8 @@ jobs:
       # script for why this specific shape is worth a test.
       - name: Check reusable workflow permissions
         run: |
-          pip install --quiet pyyaml
+          # renovate: datasource=pypi depName=PyYAML
+          pip install --quiet PyYAML==6.0.3
           python3 tests/actions/check-permissions.py
 
   # Proves the `$/` self-repository syntax actually resolves on a runner, rather

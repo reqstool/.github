@@ -70,6 +70,7 @@
       matchStrings: [
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+)\\s+default: \"(?<currentValue>[^\"]+)\"",
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+)\\s+VERSION=\"(?<currentValue>[^\"]+)\"",
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+)\\s+[^\\n]*?(?:==|@)(?<currentValue>[0-9][^\\s\"']*)",
       ],
     },
   ],

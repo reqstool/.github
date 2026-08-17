@@ -55,7 +55,8 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
 
-      - run: pip install hatch
+      # renovate: datasource=pypi depName=hatch
+      - run: pip install hatch==1.18.0
 
       - name: Run tests (with coverage)
         if: ${{ inputs.coverage-source != '' }}
