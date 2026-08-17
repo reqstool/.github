@@ -88,6 +88,17 @@
       allowedVersions: "<1",
     },
 
+    {
+      // typescript-eslint declares `typescript: ">=4.8.4 <6.1.0"` -- every
+      // published version of it, including the latest. TypeScript 6.1+ therefore
+      // fails `npm ci`, which is what CI runs, even though `npm install` will
+      // happily produce a lockfile by overriding the peer range. Lift when
+      // typescript-eslint widens its peer dependency.
+      matchDepNames: ["typescript"],
+      matchManagers: ["npm"],
+      allowedVersions: "<6.1",
+    },
+
     // =====================================================
     // Version classification labels
     // =====================================================
