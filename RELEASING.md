@@ -92,9 +92,17 @@ GitHub creates a missing environment on demand with no protection rules.
 | `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces. Only a final release reaches it. | required |
 | `test` | Staging publishes, e.g. Test PyPI. | none — a dev build lands there on every push to main |
 
-The split matters: `release` gates something reversible (a tag and a prerelease can be
-deleted), `stable` gates something that cannot be undone. Naming the tag gate `stable` would
-also read strangely when approving a release candidate, which never becomes stable.
+Two of these are **channels** — where an artifact lands — and one is a **gate**. `release`
+is not a publish target: it is the human "cut it" decision, and it has to happen before a tag
+exists, which is why it cannot be folded into either channel. A release candidate goes
+`release` → `test` and stops; a final release goes `release` → `test` → `stable`.
+
+> **These names are load-bearing for PyPI.** Trusted publishing matches the OIDC claims
+> *exactly*, environment included — so a project whose trusted publisher names a different
+> environment than the workflow uses is rejected with an invalid-publisher error, at the
+> upload, after everything else has succeeded. When adding a project, the environment on
+> pypi.org (project → Publishing) must read `stable`, and on test.pypi.org `test`. The same
+> applies to any other registry that binds an OIDC identity to an environment name.
 
 ### Why a prerelease rather than a draft
 
