@@ -1,13 +1,13 @@
 name: Release — tag and create the prerelease
 
-# The approval gate, and the point of no return.
+# Creates the tag and the prerelease. Deliberately NOT the approval gate.
 #
-# Second of four. `environment` is what makes this sit pending until a required
-# reviewer approves it -- that is the in-flow confirmation, replacing the old
-# "a human clicks Publish on a draft". By the time it is reached, prepare has
-# shown the version and the notes in the job summary and the caller's own lint
-# and build jobs have gone green, so the reviewer approves something already
-# verified rather than a version string.
+# Second of four. Everything this job does is reversible and invisible: a tag can
+# be deleted, and what it creates is a prerelease, which /releases/latest
+# excludes. The approval sits on the publish instead, where the irreversible and
+# user-visible steps are -- see RELEASING.md. Gating here would also mean
+# approving before the artifacts, the version assertion and the test-index
+# publish exist, which is less to go on, not more.
 #
 # The release is created as a PRERELEASE, not a draft. Both hide it from
 # /releases/latest, but a draft is invisible to the verification too --
@@ -34,13 +34,6 @@ on:
         required: false
         type: string
         default: ""
-      environment:
-        description: "GitHub environment whose reviewers gate the release."
-        required: false
-        type: string
-        # Not `stable`: this job runs for a release candidate too, and an rc
-        # never becomes stable. `stable` is the gate on the irreversible publish.
-        default: "release"
     outputs:
       url:
         description: "URL of the created prerelease."
@@ -53,9 +46,6 @@ jobs:
   tag:
     name: tag and create the prerelease
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.environment }}
-      url: ${{ steps.create.outputs.url }}
     permissions:
       contents: write
     outputs:
