@@ -44,6 +44,27 @@
 
   osvVulnerabilityAlerts: true,
 
+  // Tool versions pinned inside workflows and composite actions are invisible to
+  // every built-in manager -- there is no manifest for them -- so they sat frozen
+  // while everything with a package file kept moving. The `# renovate:` comment
+  // above each one is what makes it a tracked dependency.
+  //
+  // Not the customManagers:githubActionsVersions preset: that requires the value
+  // to sit on a `SOMETHING_VERSION:` key, and these are action-input `default:`s.
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: [
+        "/^\\.github/actions/.+/action\\.ya?ml$/",
+        "/^\\.github/workflows/.+\\.ya?ml$/",
+      ],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+)\\s+default: \"(?<currentValue>[^\"]+)\"",
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+)\\s+VERSION=\"(?<currentValue>[^\"]+)\"",
+      ],
+    },
+  ],
+
   packageRules: [
 
     // =====================================================
@@ -58,6 +79,13 @@
     {
       matchDepNames: ["java", "openjdk", "temurin"],
       allowedVersions: "<=21",
+    },
+
+    {
+      // asciidoctor-kroki 1.x is not compatible with Antora, which is the only
+      // thing that uses it here. Lift when Antora supports it.
+      matchDepNames: ["asciidoctor-kroki"],
+      allowedVersions: "<1",
     },
 
     // =====================================================
