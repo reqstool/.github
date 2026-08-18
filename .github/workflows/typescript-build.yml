@@ -59,14 +59,14 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
           fetch-tags: true
           ref: ${{ inputs.ref || github.ref }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ inputs.node-version }}
 
@@ -108,14 +108,14 @@ jobs:
 
       - name: Upload VSIX artifact
         if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) != '' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ inputs.artifact-name }}
           path: "${{ inputs.working-directory }}/*.vsix"
 
       - name: Upload dist artifact
         if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) == '' && hashFiles(format('{0}/dist/**', inputs.working-directory)) != '' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
