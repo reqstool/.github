@@ -90,7 +90,7 @@ jobs:
           version: ${{ inputs.version }}
           version-format: ${{ inputs.version-format }}
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -146,7 +146,7 @@ jobs:
 
       # Handed downstream rather than regenerated at tag time: the notes the
       # reviewer approved are then provably the notes that ship.
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: release-notes
           path: NOTES.md

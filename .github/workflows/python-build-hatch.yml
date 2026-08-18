@@ -44,14 +44,14 @@ jobs:
     steps:
       # Full history and tags: hatch-vcs derives the version from git state, so a
       # shallow clone would build the wrong number rather than fail.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
           fetch-tags: true
           ref: ${{ inputs.ref || github.ref }}
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7.0.0
         with:
           python-version: ${{ inputs.python-version }}
 
@@ -75,7 +75,7 @@ jobs:
       - name: Build
         run: hatch build
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
