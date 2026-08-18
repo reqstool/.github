@@ -64,7 +64,8 @@ jobs:
       - name: Dry-run — validate artifacts
         if: ${{ inputs.dry-run }}
         run: |
-          pip install --quiet twine
+          # renovate: datasource=pypi depName=twine
+          pip install --quiet twine==7.0.0
           twine check --strict dist/*
 
       - name: Publish to Test PyPI
