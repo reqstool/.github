@@ -22,7 +22,7 @@
   automergeType: "pr",
   platformAutomerge: true,
 
-  branchPrefix: "renovate",
+  branchPrefix: "renovate/",
 
   addLabels: [
     "bot-renovate",
