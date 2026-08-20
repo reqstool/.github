@@ -4,9 +4,14 @@ on:
   push:
     paths:
       - ".github/renovate.json5"
+      # so a change to the check itself is exercised by the check
+      - ".github/workflows/validate-renovate.yml"
+      - ".github/workflows/common-validate-renovate.yml"
   pull_request:
     paths:
       - ".github/renovate.json5"
+      - ".github/workflows/validate-renovate.yml"
+      - ".github/workflows/common-validate-renovate.yml"
 
 permissions: {}
 

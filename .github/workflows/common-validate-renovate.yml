@@ -30,4 +30,4 @@ jobs:
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/repo" \
             "renovate/renovate:$VERSION" \
-            renovate-config-validator "/repo/$CONFIG_PATH"
+            renovate-config-validator --strict "/repo/$CONFIG_PATH"

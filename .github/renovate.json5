@@ -178,9 +178,9 @@
 
     {
       matchManagers: ["maven", "gradle"],
-      matchPackagePrefixes: [
-        "org.springframework",
-        "org.springframework.security"
+      matchPackageNames: [
+        "org.springframework{/,}**",
+        "org.springframework.security{/,}**"
       ],
       groupName: "spring ecosystem",
       addLabels: ["renovate-type-spring"],
@@ -305,7 +305,7 @@
     {
       matchManagers: ["maven", "gradle"],
       groupName: "{{groupId}} packages",
-      matchPackagePatterns: [".*"],
+      matchPackageNames: ["/.*/"],
     }
   ],
 }
