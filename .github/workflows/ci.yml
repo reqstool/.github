@@ -67,7 +67,27 @@ jobs:
 
       # shellcheck ships on GitHub-hosted runners.
       - name: shellcheck
-        run: shellcheck .github/actions/*/*.sh tests/actions/*.sh
+        run: shellcheck .github/actions/*/*.sh tests/actions/*.sh tests/release/*.sh
+
+  test-release-artifacts:
+    name: Test — release artifacts
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24"
+
+      # typescript-build.yml packs a tarball to satisfy the version assertion in
+      # common-release-assets.yml, and nothing else checks that it does.
+      # tests/typescript/build.yml is actionlint-only and passes no version, so
+      # it never reaches the pack step at all.
+      - name: Run the release artifact test suite
+        run: bash tests/release/run-tests.sh
 
   test-actions:
     name: Test — composite actions
