@@ -106,6 +106,13 @@ jobs:
 
       - run: npm run build
 
+      # A dist/ tree carries the version in no filename, which is what
+      # common-release-assets.yml asserts against. `npm pack` is npm's analog of
+      # a wheel; packed into dist/ so the uploaded artifact stays flat.
+      - name: Pack the npm tarball
+        if: ${{ inputs.version != '' && hashFiles(format('{0}/*.vsix', inputs.working-directory)) == '' }}
+        run: npm pack --pack-destination dist
+
       - name: Upload VSIX artifact
         if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) != '' }}
         uses: actions/upload-artifact@v7.0.1
