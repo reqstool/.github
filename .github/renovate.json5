@@ -271,19 +271,25 @@
       automerge: true,
     },
 
-    // Third-party actions are pinned to a commit digest, first-party ones are
-    // not. The split is deliberate: a `v4` tag is mutable, so trusting one from
-    // an account outside this org means trusting whoever can move it — which is
-    // what CodeQL's actions/unpinned-tag flags. GitHub's own `actions/*` sit
-    // inside the same trust boundary as the runner, and pinning them would
-    // replace the major-tag automerge above with a digest bump per action per
-    // week for no change in exposure.
+    // Everything but GitHub's own actions is pinned to a commit digest. A `v4`
+    // tag is mutable, so trusting one means trusting whoever can move it —
+    // which is what CodeQL's actions/unpinned-tag flags. GitHub's own
+    // `actions/*` sit inside the same trust boundary as the runner, and pinning
+    // them would replace the major-tag automerge above with a digest bump per
+    // action per week for no change in exposure.
     //
-    // Renovate keeps the digests current and rewrites the `# vX.Y.Z` comment
+    // `reqstool/*` was excluded until 2026-08-23. That was written when the
+    // only first-party references were inside this repo, where `$/` makes
+    // pinning moot — but this config is extended by every repo in the org, so
+    // it also stopped their references to *this* repo being pinned, leaving
+    // them on a mutable `@main`. See reqstool/.github#25; consumers now pin to
+    // a tag, and this rule is what keeps those pins current.
+    //
+    // Renovate keeps the digests current and rewrites the `# X.Y.Z` comment
     // alongside them, so the pins do not silently rot.
     {
       matchManagers: ["github-actions"],
-      matchPackageNames: ["!/^(actions|github)\\//", "!/^reqstool\\//"],
+      matchPackageNames: ["!/^(actions|github)\\//"],
       pinDigests: true,
       addLabels: ["renovate-type-cicd"],
     },
