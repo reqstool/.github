@@ -35,7 +35,9 @@ runs:
   steps:
     - name: Reject an unknown target
       shell: bash
-      run: "$GITHUB_ACTION_PATH/check-target.sh '${{ inputs.target }}'"
+      env:
+        TARGET: ${{ inputs.target }}
+      run: "$GITHUB_ACTION_PATH/check-target.sh \"$TARGET\""
 
     - uses: actions/download-artifact@v8.0.1
       with:
