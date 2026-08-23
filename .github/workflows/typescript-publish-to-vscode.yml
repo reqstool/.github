@@ -38,6 +38,15 @@ on:
         required: false
         type: string
         default: "open-vsx,vscode-marketplace"
+      azure-credential:
+        description: >
+          Authenticate to the VS Code Marketplace with Microsoft Entra ID instead of
+          VSCE_PAT. Azure DevOps retires global PATs on 2026-12-01 -- see
+          reqstool/.github#98. Enabling this needs Entra set up for the publisher first,
+          and likely an azure/login step and id-token: write on this job.
+        required: false
+        type: boolean
+        default: false
     secrets:
       OPEN_VSX_TOKEN:
         required: false
@@ -111,19 +120,53 @@ jobs:
         id: vsix
         run: echo "path=$(find . -maxdepth 1 -name '*.vsix' | head -1)" >> "$GITHUB_OUTPUT"
 
+      # Published with each registry's own CLI rather than a third-party action.
+      # HaaLeo/publish-vscode-extension declares `pat` as required, so it cannot
+      # reach Entra ID -- which is what replaces the PAT Azure DevOps retires on
+      # 2026-12-01. It also still declares node20 and has had no commit since
+      # 2025-06. See reqstool/.github#98.
+      #
+      # Both CLIs come from the extension's own devDependencies via `npm ci`
+      # above -- `vsce` already builds the VSIX -- so their versions are pinned
+      # in its lockfile and tracked by Renovate rather than floating here.
+      #
+      # A `run:` step also uses the job's Node, so there is no `using:`
+      # declaration to be deprecated out from under us.
+      - name: Dry-run — report what would be published
+        if: ${{ inputs.dry-run }}
+        env:
+          VSIX_PATH: ${{ steps.vsix.outputs.path }}
+          REGISTRIES: ${{ inputs.registries }}
+        run: |
+          set -euo pipefail
+          if [ ! -s "$VSIX_PATH" ]; then
+            echo "::error::No VSIX was produced at '$VSIX_PATH'."
+            exit 1
+          fi
+          echo "Would publish $VSIX_PATH ($(du -h "$VSIX_PATH" | cut -f1)) to: $REGISTRIES"
+
       - name: Publish to Open VSX Registry
-        if: ${{ contains(inputs.registries, 'open-vsx') }}
-        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
-        with:
-          pat: ${{ secrets.OPEN_VSX_TOKEN }}
-          extensionFile: ${{ steps.vsix.outputs.path }}
-          dryRun: ${{ inputs.dry-run }}
+        if: ${{ contains(inputs.registries, 'open-vsx') && !inputs.dry-run }}
+        env:
+          # ovsx reads the token from OVSX_PAT; passing it as an argument would
+          # put it in the process list. Open VSX is Eclipse-run and unaffected
+          # by the Azure DevOps PAT retirement.
+          OVSX_PAT: ${{ secrets.OPEN_VSX_TOKEN }}
+          VSIX_PATH: ${{ steps.vsix.outputs.path }}
+        run: npx --no-install ovsx publish "$VSIX_PATH"
 
       - name: Publish to VS Code Marketplace
-        if: ${{ contains(inputs.registries, 'vscode-marketplace') }}
-        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
-        with:
-          pat: ${{ secrets.VSCE_PAT }}
-          registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ steps.vsix.outputs.path }}
-          dryRun: ${{ inputs.dry-run }}
+        if: ${{ contains(inputs.registries, 'vscode-marketplace') && !inputs.dry-run }}
+        env:
+          # vsce reads the token from VSCE_PAT, and ignores it under
+          # --azure-credential.
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          VSIX_PATH: ${{ steps.vsix.outputs.path }}
+          AZURE_CREDENTIAL: ${{ inputs.azure-credential }}
+        run: |
+          set -euo pipefail
+          if [ "$AZURE_CREDENTIAL" = "true" ]; then
+            npx --no-install vsce publish --azure-credential --packagePath "$VSIX_PATH"
+          else
+            npx --no-install vsce publish --packagePath "$VSIX_PATH"
+          fi
