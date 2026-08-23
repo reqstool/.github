@@ -1,0 +1,45 @@
+name: Download distributions
+description: >
+  Download a built Python distribution artifact into dist/, ready for a publish
+  step in the calling job.
+
+# Deliberately does NOT publish, despite being the shared half of the PyPI
+# publish job. pypa/gh-action-pypi-publish is a Docker container action, and
+# GitHub resolves a nested Docker action's image against the *wrapping* action's
+# repository rather than its own: an earlier version of this action wrapped it,
+# and every publish failed with `docker: invalid reference format`, trying to
+# pull ghcr.io/reqstool/.github:<this action's own sha>. The action's own
+# maintainer describes the same breakage in pypi/warehouse#11096. The publish
+# step therefore stays inline in each caller's release.yml.
+#
+# A composite action remains the right shape for the rest. Unlike a
+# workflow_call reusable workflow, it does not create a new workflow context, so
+# the job keeps the caller's own OIDC identity -- which is what PyPI's trusted
+# publishing matches on, and why the publish job cannot live in a reusable
+# workflow. See RELEASING.md.
+
+inputs:
+  dry-run:
+    description: "Validate the artifacts with twine check instead of leaving them for a publish step."
+    required: false
+    default: "false"
+  artifact:
+    description: "Name of the build artifact holding the distributions."
+    required: false
+    default: "dist"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/download-artifact@v8.0.1
+      with:
+        name: ${{ inputs.artifact }}
+        path: dist
+
+    - name: Dry-run — validate artifacts
+      if: ${{ inputs.dry-run == 'true' }}
+      shell: bash
+      run: |
+        # renovate: datasource=pypi depName=twine
+        pip install --quiet twine==7.0.0
+        twine check --strict dist/*
