@@ -124,6 +124,16 @@ cleaner option, as below.
 > pypi.org (project → Publishing) must read `stable`, and on test.pypi.org `test`. The same
 > applies to any other registry that binds an OIDC identity to an environment name.
 
+> **PyPI does not accept a reusable workflow as the trusted publisher at all**, not even with
+> the right names —
+> [pypi/warehouse#11096](https://github.com/pypi/warehouse/issues/11096), unresolved as of
+> this writing, confirmed against this org's own release runs on 2026-08-23. The job that
+> calls `pypa/gh-action-pypi-publish` must be defined directly in the caller's own workflow
+> file; `actions/publish-to-pypi` is a composite action, not a `workflow_call` workflow, for
+> exactly this reason — a job that uses it for steps still belongs to the caller's own
+> workflow for OIDC purposes. Every PyPI-publishing repo's `release.yml` and any
+> `publish-dev-to-*.yml` must call it this way, never through another reusable workflow.
+
 ## Cutting a release candidate
 
 Set `prerelease` to `rc` (or `b`/`a`) and run the workflow as normal. It does everything a
@@ -185,7 +195,8 @@ prepare  (dry-run stops here)
   → [approval] tag        common-release-tag.yml
   → build @ tag           the repo's own build.yml, ref = the tag
   → assets                common-release-assets.yml
-  → publish               python-publish-to-pypi.yml / java-publish-to-maven.yml / …
+  → publish               actions/publish-to-pypi (job in the caller's own workflow)
+                          / java-publish-to-maven.yml / …
   → promote               common-release-promote.yml
 ```
 

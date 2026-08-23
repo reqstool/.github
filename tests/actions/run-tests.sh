@@ -135,6 +135,16 @@ expect 1 "an unknown format is rejected"                -- "$NP" 0.5.0 rc npm
 cd "$ROOT" || exit 1
 
 # --------------------------------------------------------------------------
+# publish-to-pypi/check-target.sh
+# --------------------------------------------------------------------------
+CT="$ACTIONS/publish-to-pypi/check-target.sh"
+
+expect 0 "pypi is accepted"              -- "$CT" pypi
+expect 0 "testpypi is accepted"          -- "$CT" testpypi
+expect 1 "an unknown target is rejected" -- "$CT" prod
+expect 1 "an empty target is rejected"   -- "$CT" ""
+
+# --------------------------------------------------------------------------
 echo ""
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
