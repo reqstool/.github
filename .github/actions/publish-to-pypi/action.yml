@@ -1,6 +1,5 @@
 name: Publish to PyPI
-description: >
-  Upload a built distribution to PyPI or Test PyPI via trusted publishing (OIDC).
+description: Upload a built distribution to PyPI via trusted publishing (OIDC).
 
 # PyPI does not support trusted publishing through a workflow_call reusable
 # workflow -- https://github.com/pypi/warehouse/issues/11096, confirmed against
@@ -15,12 +14,12 @@ description: >
 # This replaces python-publish-to-pypi.yml for that reason. That workflow is
 # kept only for tests/python/publish-to-pypi.yml's actionlint coverage; nothing
 # should call it for a real publish.
+#
+# No Test PyPI target: PyPI accepts pre-release version identifiers (0.3.0rc1)
+# on the real index directly, and pip ignores them without --pre, so a
+# candidate never needs a separate index to land somewhere safe.
 
 inputs:
-  target:
-    description: "pypi (the real index) or testpypi."
-    required: false
-    default: "pypi"
   dry-run:
     description: "Run twine check instead of uploading."
     required: false
@@ -33,12 +32,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Reject an unknown target
-      shell: bash
-      env:
-        TARGET: ${{ inputs.target }}
-      run: "$GITHUB_ACTION_PATH/check-target.sh \"$TARGET\""
-
     - uses: actions/download-artifact@v8.0.1
       with:
         name: ${{ inputs.artifact }}
@@ -52,19 +45,8 @@ runs:
         pip install --quiet twine==7.0.0
         twine check --strict dist/*
 
-    - name: Publish to Test PyPI
-      if: ${{ inputs.dry-run != 'true' && inputs.target == 'testpypi' }}
-      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        attestations: true
-        # A re-run after a downstream failure must not fail on the upload that
-        # already succeeded. Not set for the real index, where a silent no-op
-        # would hide a version collision.
-        skip-existing: true
-
     - name: Publish to PyPI
-      if: ${{ inputs.dry-run != 'true' && inputs.target == 'pypi' }}
+      if: ${{ inputs.dry-run != 'true' }}
       uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
       with:
         attestations: true

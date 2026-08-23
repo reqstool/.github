@@ -59,8 +59,7 @@ Tags carry no `v` prefix, in any ecosystem.
    resolving the latest release, and reversible.
 
 6. The project is rebuilt *from the tag* — which is what gives the artifacts their version —
-   and those artifacts are checked and attached to the prerelease. The staging publish
-   (Test PyPI) happens here too, ungated.
+   and those artifacts are checked and attached to the prerelease.
 
    The Java repos skip the rebuild: `mvn deploy` and `./gradlew publishPlugins` build from the
    tag themselves, so there is nothing to rebuild and nothing to attach twice. The check still
@@ -72,12 +71,13 @@ Tags carry no `v` prefix, in any ecosystem.
    `stable` environment, so it sits pending until a required reviewer approves it. There is no
    draft to publish by hand — this is the confirmation step, and it sits here rather than
    earlier because publishing and promoting are the only steps that cannot be undone. By this
-   point the artifacts exist, their version has been asserted against the tag, and the staging
-   publish has either succeeded or stopped the run.
+   point the artifacts exist and their version has been asserted against the tag.
 
 8. On approval the artifacts go to the real index, and the prerelease is promoted to the
-   latest release. **A release candidate stops before step 7 instead**, staying a prerelease
-   permanently — everything it did was reversible, so it needs no approval.
+   latest release. **Whether a release candidate reaches this step at all is per-ecosystem** —
+   see the notes below. Promotion is always a no-op for one regardless:
+   `common-release-promote.yml` skips the API call internally whenever the version is a
+   candidate, so it stays a prerelease permanently either way.
 
 Promotion is deliberately last: until it runs, nothing resolving "the latest release" can
 see what was built, so every step that can fail has already succeeded by the time anyone is
@@ -93,7 +93,7 @@ creates a missing environment on demand with no protection rules.
 | Environment | Holds | Reviewer |
 |---|---|---|
 | `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces — and, downstream of it, promotion to latest. | **required** |
-| `test` | The non-stable index, e.g. Test PyPI. A dev build lands there on every push to main. | none |
+| `test` | Currently unused. Existed for Test PyPI, which no longer exists as a publish target — see the PyPI notes below. Still declared, in case a future non-stable index needs it. | none |
 
 **The approval is on the publish, not on the tag.** That is deliberate, and it is the
 opposite of where an earlier version of this flow put it. Everything before the publish is
@@ -102,13 +102,12 @@ reversible and invisible: a tag can be deleted, and the release is a prerelease,
 back — the upload to a real index, and promotion to latest, which is the moment a release
 becomes the one people get.
 
-Approving there also means approving with more to go on. By then the artifacts exist, their
-version has been asserted against the tag, and the test-index publish has either succeeded or
-stopped the run. Gating the tag job instead would mean approving a version string and a green
-build, before any of that.
+Approving there also means approving with more to go on. By then the artifacts exist and
+their version has been asserted against the tag. Gating the tag job instead would mean
+approving a version string and a green build, before any of that.
 
-`test` has no reviewer on purpose: a dev build lands there on every push to main, and a gate
-would mean approving each one by hand. This matches
+`test` has no reviewer on purpose, for when it is next used: a dev build landing there on
+every push would make a gate mean approving each one by hand. This matches
 [PyPI's own guidance](https://docs.pypi.org/trusted-publishers/security-model/), which asks
 for manual approval on the environment that publishes to PyPI and says a gate on the test
 environment is unnecessary.
@@ -121,8 +120,8 @@ cleaner option, as below.
 > *exactly*, environment included — so a project whose trusted publisher names a different
 > environment than the workflow uses is rejected with an invalid-publisher error, at the
 > upload, after everything else has succeeded. When adding a project, the environment on
-> pypi.org (project → Publishing) must read `stable`, and on test.pypi.org `test`. The same
-> applies to any other registry that binds an OIDC identity to an environment name.
+> pypi.org (project → Publishing) must read `stable`. The same applies to any other registry
+> that binds an OIDC identity to an environment name.
 
 > **PyPI does not accept a reusable workflow as the trusted publisher at all**, not even with
 > the right names —
@@ -131,8 +130,8 @@ cleaner option, as below.
 > calls `pypa/gh-action-pypi-publish` must be defined directly in the caller's own workflow
 > file; `actions/publish-to-pypi` is a composite action, not a `workflow_call` workflow, for
 > exactly this reason — a job that uses it for steps still belongs to the caller's own
-> workflow for OIDC purposes. Every PyPI-publishing repo's `release.yml` and any
-> `publish-dev-to-*.yml` must call it this way, never through another reusable workflow.
+> workflow for OIDC purposes. Every PyPI-publishing repo's `release.yml` must call it this
+> way, never through another reusable workflow.
 
 ## Cutting a release candidate
 
@@ -159,6 +158,12 @@ and then **stops before step 9**.
 - **Not every registry accepts one.** The VS Code Marketplace requires a strict `x.y.z` and
   rejects `0.5.0-rc.1`, so in `reqstool-vscode` an rc produces a GitHub prerelease with the
   VSIX attached but is not published to either marketplace. Testers install the VSIX by hand.
+- **PyPI does, and there is no staging index to route one to instead.** A candidate publishes
+  straight to the real index behind the same `stable` approval as any other release — pip
+  ignores it without `--pre`, so there is nothing unsafe about it sitting there. This is also
+  what npm and Maven Central already do; PyPI previously differed only because
+  `python-publish-to-pypi.yml` detoured candidates to Test PyPI, which no longer exists (see
+  above, and [pypi/warehouse#11096](https://github.com/pypi/warehouse/issues/11096) for why).
 
 Shipping the real release afterwards is just the workflow again with `prerelease: none`.
 The candidates' tags stay where they are; nothing needs deleting.
