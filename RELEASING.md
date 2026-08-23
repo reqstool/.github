@@ -123,15 +123,27 @@ cleaner option, as below.
 > pypi.org (project → Publishing) must read `stable`. The same applies to any other registry
 > that binds an OIDC identity to an environment name.
 
-> **PyPI does not accept a reusable workflow as the trusted publisher at all**, not even with
-> the right names —
-> [pypi/warehouse#11096](https://github.com/pypi/warehouse/issues/11096), unresolved as of
-> this writing, confirmed against this org's own release runs on 2026-08-23. The job that
-> calls `pypa/gh-action-pypi-publish` must be defined directly in the caller's own workflow
-> file; `actions/publish-to-pypi` is a composite action, not a `workflow_call` workflow, for
-> exactly this reason — a job that uses it for steps still belongs to the caller's own
-> workflow for OIDC purposes. Every PyPI-publishing repo's `release.yml` must call it this
-> way, never through another reusable workflow.
+> **The PyPI publish job cannot live in a reusable workflow in this repo.** PyPI matches the
+> OIDC `job_workflow_ref` claim — the *bottom-most* workflow that ran the job — against the
+> Trusted Publisher's owner, repo and filename. A `workflow_call` into
+> `reqstool/.github` puts *this* repository in that claim, which can never match a Trusted
+> Publisher configured for the calling project, so it fails with `invalid-publisher` no matter
+> what the config names. (A reusable workflow in the *same* repo as its caller does work, by
+> accident of the same matching rule — that is not what this org does.)
+> [pypi/warehouse#11096](https://github.com/pypi/warehouse/issues/11096) tracks proper support;
+> unresolved as of this writing.
+>
+> **A composite action is fine, and is what this repo uses.** Unlike a reusable workflow it
+> creates no new workflow context, so the job keeps the caller's own identity — hence
+> `actions/download-dists`.
+>
+> **But `pypa/gh-action-pypi-publish` may not be nested inside one.** It is a Docker container
+> action, and GitHub resolves a nested Docker action's image against the wrapping action's
+> repository rather than its own — an earlier version of `download-dists` wrapped it and every
+> publish failed with `docker: invalid reference format`. Its own maintainer
+> [describes the same breakage](https://github.com/pypi/warehouse/issues/11096#issuecomment-2871981512)
+> ("GH doesn't work well with nested composite actions ... making it defunct"). It stays a bare
+> step, inline, in every PyPI-publishing repo's `release.yml`.
 
 ## Cutting a release candidate
 
@@ -200,7 +212,8 @@ prepare  (dry-run stops here)
   → [approval] tag        common-release-tag.yml
   → build @ tag           the repo's own build.yml, ref = the tag
   → assets                common-release-assets.yml
-  → publish               actions/publish-to-pypi (job in the caller's own workflow)
+  → publish               actions/download-dists + an inline publish step,
+                          in the caller's own workflow (PyPI)
                           / java-publish-to-maven.yml / …
   → promote               common-release-promote.yml
 ```
