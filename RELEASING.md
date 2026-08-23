@@ -128,10 +128,17 @@ cleaner option, as below.
 > [pypi/warehouse#11096](https://github.com/pypi/warehouse/issues/11096), unresolved as of
 > this writing, confirmed against this org's own release runs on 2026-08-23. The job that
 > calls `pypa/gh-action-pypi-publish` must be defined directly in the caller's own workflow
-> file; `actions/publish-to-pypi` is a composite action, not a `workflow_call` workflow, for
-> exactly this reason — a job that uses it for steps still belongs to the caller's own
-> workflow for OIDC purposes. Every PyPI-publishing repo's `release.yml` must call it this
-> way, never through another reusable workflow.
+> file, never behind `uses: reqstool/.github/.github/workflows/...@main`.
+>
+> **It cannot be wrapped in a composite action either** — also confirmed against this org's
+> own runs, the same day. `pypa/gh-action-pypi-publish` is a Docker container action, and
+> GitHub resolves its image using the *wrapping* action's own repository rather than
+> `pypa/gh-action-pypi-publish`'s when it is nested inside another `uses:`, which fails with
+> `docker: invalid reference format`. [The action's own maintainers say this usage is
+> untested and unsupported](https://github.com/pypa/gh-action-pypi-publish/blob/unstable/v1/README.md).
+> It has to appear as a bare step, inline, in every PyPI-publishing repo's `release.yml` —
+> which is also why there is no shared composite action for the PyPI publish step at all,
+> unlike every other registry this org publishes to.
 
 ## Cutting a release candidate
 
@@ -200,7 +207,7 @@ prepare  (dry-run stops here)
   → [approval] tag        common-release-tag.yml
   → build @ tag           the repo's own build.yml, ref = the tag
   → assets                common-release-assets.yml
-  → publish               actions/publish-to-pypi (job in the caller's own workflow)
+  → publish               inline steps in the caller's own workflow (PyPI)
                           / java-publish-to-maven.yml / …
   → promote               common-release-promote.yml
 ```
