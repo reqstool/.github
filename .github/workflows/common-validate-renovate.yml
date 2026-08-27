@@ -26,7 +26,7 @@ jobs:
           CONFIG_PATH: ${{ inputs.config-path }}
         run: |
           # renovate: datasource=docker depName=renovate/renovate
-          VERSION="44.39.3"
+          VERSION="44.41.0"
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/repo" \
             "renovate/renovate:$VERSION" \
