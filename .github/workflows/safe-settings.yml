@@ -14,14 +14,23 @@ on:
         type: boolean
         default: false
 
+permissions: {}
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # safe-settings authenticates as its own GitHub App, so the workflow
+    # token only ever needs to read this repo's config.
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           repository: github/safe-settings
           ref: 2.1.18
           path: .safe-settings
