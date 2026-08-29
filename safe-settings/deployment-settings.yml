@@ -1,0 +1,10 @@
+restrictedRepos:
+  exclude:
+    - .github-private
+    - .github
+    - reqstool-test-packages
+    - reqstool-vscode-extension
+    # Archived repos are read-only; safe-settings can't create/update
+    # labels or settings on them and the sync job fails otherwise.
+    - reqstool-regression-python
+    - reqstool-regression-java

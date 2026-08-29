@@ -1,0 +1,135 @@
+repository:
+  homepage: https://reqstool.github.io
+  has_issues: true
+  has_wiki: false
+  has_projects: false
+  allow_squash_merge: true
+  allow_merge_commit: false
+  allow_rebase_merge: false
+  allow_auto_merge: true
+  delete_branch_on_merge: true
+  allow_update_branch: true
+  squash_merge_commit_title: PR_TITLE
+  squash_merge_commit_message: COMMIT_MESSAGES
+  security:
+    # Dependabot alerts are enforced ON by the org "GitHub recommended"
+    # security configuration, so safe-settings cannot disable them (the
+    # DELETE returns 422 and fails the sync). Alerts are visibility-only;
+    # Renovate remains the only bot that opens dependency PRs because
+    # automated security fixes stay off below.
+    enableVulnerabilityAlerts: true
+    enableAutomatedSecurityFixes: false
+
+labels:
+  include:
+    # ---------------------------------------------------------------
+    # GitHub default labels — created automatically on repo creation
+    # ---------------------------------------------------------------
+    - name: bug
+      color: "d73a4a"
+      description: "Something isn't working"
+    - name: documentation
+      color: "0075ca"
+      description: "Improvements or additions to documentation"
+    - name: duplicate
+      color: "cfd3d7"
+      description: "This issue or pull request already exists"
+    - name: enhancement
+      color: "a2eeef"
+      description: "New feature or request"
+    - name: good first issue
+      color: "7057ff"
+      description: "Good for newcomers"
+    - name: help wanted
+      color: "008672"
+      description: "Extra attention is needed"
+    - name: invalid
+      color: "e4e669"
+      description: "This doesn't seem right"
+    - name: question
+      color: "d876e3"
+      description: "Further information is requested"
+    - name: wontfix
+      color: "ffffff"
+      description: "This will not be worked on"
+
+    # ---------------------------------------------------------------
+    # Dependabot auto-created labels (legacy — Renovate is now the
+    # active dependency bot, but security updates may still create
+    # these; kept for consistency until Dependabot is fully retired)
+    # ---------------------------------------------------------------
+    - name: dependencies
+      color: "0366d6"
+      description: "Pull requests that update a dependency file"
+    - name: github_actions
+      color: "000000"
+      description: "Pull requests that update GitHub Actions code"
+    - name: java
+      color: "ffa221"
+      description: "Pull requests that update Java code"
+    - name: python
+      color: "2b67c6"
+      description: "Pull requests that update Python code"
+    - name: javascript
+      color: "168700"
+      description: "Pull requests that update javascript code"
+
+    # ---------------------------------------------------------------
+    # Renovate bot-state labels — referenced by addLabels/
+    # stopUpdatingLabel in each repo's renovate.json5
+    # ---------------------------------------------------------------
+    - name: bot-renovate
+      color: "5319e7"
+      description: "Renovate dependency update"
+    - name: bot-renovate-stop
+      color: "5D0811"
+      description: "Renovate updates paused for this dependency"
+    - name: security
+      color: "b60205"
+      description: "Vulnerability alert / security update"
+
+    # ---------------------------------------------------------------
+    # Renovate ecosystem classification labels — distinct hue per
+    # ecosystem (renovate-type-*)
+    # ---------------------------------------------------------------
+    - name: renovate-type-cicd
+      color: "1d76db"
+      description: "CI/CD pipeline dependency update"
+    - name: renovate-type-java
+      color: "b07219"
+      description: "Java dependency update"
+    - name: renovate-type-gradle-plugin
+      color: "02303a"
+      description: "Gradle plugin update"
+    - name: renovate-type-python
+      color: "306998"
+      description: "Python dependency update"
+    - name: renovate-type-node
+      color: "3c873a"
+      description: "Node.js dependency update"
+
+    # ---------------------------------------------------------------
+    # Renovate version classification labels — traffic-light scheme
+    # by upgrade risk (renovate-version-*)
+    # ---------------------------------------------------------------
+    - name: renovate-version-major
+      color: "d73a4a"
+      description: "Major version update (breaking risk)"
+    - name: renovate-version-minor
+      color: "fbca04"
+      description: "Minor version update"
+    - name: renovate-version-patch
+      color: "0e8a16"
+      description: "Patch version update"
+    - name: renovate-version-digest
+      color: "c5def5"
+      description: "Digest/pin update"
+
+  exclude:
+    - "^release"
+
+# NOTE: `rulesets` are defined in suborgs/all.yml, not here. A top-level
+# rulesets block in this org-level settings.yml is created as an
+# ORGANIZATION ruleset, which requires GitHub Team. This is a free org,
+# so rulesets are defined at suborg scope to create per-repo rulesets
+# (free) instead.

@@ -1,0 +1,78 @@
+suborgrepos:
+  - "*"
+
+# Workaround for safe-settings shared-object mutation bug:
+# Without a suborg entry, all repos share the same repoConfig reference via
+# Object.assign() mutation. Adding a suborg causes mergeDeep({}, ...) which
+# creates a fresh object per repo, giving each repo its correct name.
+repository: {}
+
+# Defined at suborg scope (not org-level settings.yml) so safe-settings
+# creates these as per-repo rulesets via /repos/{owner}/{repo}/rulesets.
+# Organization rulesets require GitHub Team; repository rulesets are free.
+rulesets:
+  - name: protect-main
+    target: branch
+    enforcement: active
+    # release/* and hotfix/* are release-capable: check-release-branch.sh accepts
+    # main, hotfix/* and release/* as sources for a release. They are covered here
+    # so a branch a release can be cut from is never less protected than main.
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+          - "refs/heads/release/*"
+          - "refs/heads/hotfix/*"
+        exclude: []
+    bypass_actors:
+      # Renovate (integration 2740) deliberately has NO bypass here. It used to
+      # hold `bypass_mode: pull_request`, which exempted its PRs from the
+      # `pull_request` rule -- and would exempt them from any required status
+      # check added later, which is the failure in reqstool/.github#111 waiting
+      # to happen again. The approving review comes from renovate-approve[bot]
+      # instead, which leaves every rule enforced.
+      - actor_id: 1
+        actor_type: OrganizationAdmin
+        bypass_mode: always
+    rules:
+      - type: deletion
+      - type: non_fast_forward
+      # Redundant while merges are squash-only, but a ruleset that does not
+      # depend on a repo setting staying put is one less thing to reason about.
+      - type: required_linear_history
+      - type: pull_request
+        parameters:
+          required_approving_review_count: 1
+          dismiss_stale_reviews_on_push: true
+          require_code_owner_review: false
+          require_last_push_approval: false
+          # Required by the repository-ruleset pull_request schema; omitting
+          # it fails validation with "data matches no possible input".
+          # All review threads must be resolved before a PR can be merged.
+          required_review_thread_resolution: true
+
+# Environments the release flow binds to; see RELEASING.md in reqstool/.github.
+environments:
+  # The approval, and the only one. It gates publishing to a real index and,
+  # downstream of that, promotion to latest -- the two steps that cannot be taken
+  # back. Tagging is deliberately not gated: a tag can be deleted and the release
+  # it creates is a prerelease, so there is nothing there to protect.
+  #
+  # Self-review is allowed on purpose: the maintainer who dispatches a release is
+  # normally the one who approves it, and the second pair of eyes was the PR
+  # review that got the commits onto main.
+  - name: stable
+    prevent_self_review: false
+    wait_timer: 0
+    reviewers:
+      - id: 1577689
+        type: User
+    deployment_branch_policy:
+      protected_branches: true
+      custom_branch_policies: false
+
+  # The non-stable index. No reviewer: a dev build lands here on every push to
+  # main, and a gate would mean approving each one by hand.
+  - name: test
+    wait_timer: 0
+    deployment_branch_policy: ~
