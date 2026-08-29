@@ -20,7 +20,15 @@
   semanticCommitScope: "{{datasource}}",
 
   automergeType: "pr",
-  platformAutomerge: true,
+  // false, not true. Both mechanisms wait for CI, but for different things:
+  // GitHub's auto-merge waits only for the checks a ruleset marks *required*,
+  // while Renovate's own merge waits for the branch to be green outright.
+  // `protect-main` requires no status checks, so with `true` a PR was mergeable
+  // the moment it opened and minor/patch bumps landed before `build` finished --
+  // three failing builds reached reqstool-client's main that way
+  // (reqstool/.github#111). Waiting on the whole branch is also the rule that
+  // stays correct as CI changes, since it needs no per-repo list of contexts.
+  platformAutomerge: false,
 
   branchPrefix: "renovate/",
 
