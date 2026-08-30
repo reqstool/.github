@@ -1,0 +1,35 @@
+# Per-repo override for reqstool-client.
+#
+# safe-settings merges arrays by name (lib/mergeDeep.js NAME_FIELDS) and `rules`
+# by `type`, so this appends a required_status_checks rule to the `protect-main`
+# ruleset in suborgs/all.yml without restating the other four rules.
+#
+# Why per-repo and not suborgs/all.yml: the build job is named differently in
+# every repo -- `build` here, `build / build` in vscode, `build (main)` +
+# `build (pypi)` in the plugin repos -- so one shared list cannot work.
+#
+# The contexts below were observed on BOTH a human PR (#452) and a Renovate PR
+# (#451). That is the check that matters: a required context which never reports
+# leaves the PR waiting on it forever.
+#
+# `renovate/stability-days` is deliberately absent. It reports only on Renovate's
+# own PRs -- it is on #451 and not on #452 -- so requiring it would block every
+# human PR permanently.
+rulesets:
+  - name: protect-main
+    rules:
+      - type: required_status_checks
+        parameters:
+          # Both keys are required by the ruleset schema; omitting either fails
+          # validation, the same way the pull_request rule needs
+          # required_review_thread_resolution.
+          strict_required_status_checks_policy: false
+          required_status_checks:
+            - context: build
+            - context: Reuse linting job / linting
+            - context: check / Validate PR title
+            - context: DCO
+            - context: Analyze (actions)
+            - context: Analyze (javascript-typescript)
+            - context: Analyze (python)
+            - context: CodeQL
