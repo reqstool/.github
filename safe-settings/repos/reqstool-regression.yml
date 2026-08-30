@@ -1,8 +1,9 @@
 # Per-repo override for reqstool-regression.
 #
-# Appends this repo's own required contexts to the `protect-main` ruleset.
-# safe-settings merges arrays by name and `rules` by `type`, so these UNION
-# with the org-wide contexts in suborgs/all.yml rather than replacing them.
+# The FULL required-context list lives here, not split with suborgs/all.yml.
+# A ruleset may hold only one rule of each type, and a required_status_checks
+# rule in all.yml plus one here does not combine into a single rule -- see the
+# note in all.yml. Keep every context for this repo in this file.
 #
 # Contexts are the INTERSECTION of a human PR (#35) and a Renovate PR (#38).
 # `renovate/stability-days` reports only on Renovate's own PRs, so requiring it
@@ -14,12 +15,15 @@ rulesets:
     rules:
       - type: required_status_checks
         parameters:
-          # Both keys are required by the ruleset schema, in every file.
+          # Both keys are required by the ruleset schema.
           strict_required_status_checks_policy: false
           required_status_checks:
+            - context: "Analyze (actions)"
             - context: "Analyze (java-kotlin)"
             - context: "Analyze (javascript-typescript)"
             - context: "Analyze (python)"
+            - context: "CodeQL"
+            - context: "DCO"
             - context: "Validate (fixtures/ecosystems/java)"
             - context: "Validate (fixtures/ecosystems/python)"
             - context: "Validate (fixtures/ecosystems/typescript)"
