@@ -86,7 +86,8 @@ artifacts.
 
 ### The two environments
 
-Both declared for every repo in `reqstool/.github-private`'s safe-settings config —
+Both declared for every repo in this repository's safe-settings config
+(`safe-settings/suborgs/all.yml`) —
 **without them the approval is inert and a release runs straight through**, because GitHub
 creates a missing environment on demand with no protection rules.
 
