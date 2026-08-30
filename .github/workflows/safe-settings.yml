@@ -56,3 +56,7 @@ jobs:
           # safe-settings reads FULL_SYNC_NOP. There is no DRY_RUN variable --
           # the name it replaces did nothing, so every run wrote for real.
           FULL_SYNC_NOP: ${{ inputs.nop && 'true' || 'false' }}
+          # At the default level a run that reverted a setting and one that did
+          # nothing log the same couple of lines. With NOP mode crashing, debug
+          # output is the only account of what a sync actually did.
+          LOG_LEVEL: debug
