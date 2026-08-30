@@ -1,35 +1,24 @@
 # Per-repo override for reqstool-client.
 #
-# safe-settings merges arrays by name (lib/mergeDeep.js NAME_FIELDS) and `rules`
-# by `type`, so this appends a required_status_checks rule to the `protect-main`
-# ruleset in suborgs/all.yml without restating the other four rules.
+# Appends this repo's own required contexts to the `protect-main` ruleset.
+# safe-settings merges arrays by name and `rules` by `type`, so these UNION
+# with the org-wide contexts in suborgs/all.yml rather than replacing them.
 #
-# Why per-repo and not suborgs/all.yml: the build job is named differently in
-# every repo -- `build` here, `build / build` in vscode, `build (main)` +
-# `build (pypi)` in the plugin repos -- so one shared list cannot work.
-#
-# The contexts below were observed on BOTH a human PR (#452) and a Renovate PR
-# (#451). That is the check that matters: a required context which never reports
-# leaves the PR waiting on it forever.
-#
-# `renovate/stability-days` is deliberately absent. It reports only on Renovate's
-# own PRs -- it is on #451 and not on #452 -- so requiring it would block every
-# human PR permanently.
+# Contexts are the INTERSECTION of a human PR (#453) and a Renovate PR (#451).
+# `renovate/stability-days` reports only on Renovate's own PRs, so requiring it
+# would block every human PR here forever. The intersection also drops
+# path-filtered contexts (build-docs.yml runs only on `docs/**`), which would
+# otherwise hang any PR that does not touch docs.
 rulesets:
   - name: protect-main
     rules:
       - type: required_status_checks
         parameters:
-          # Both keys are required by the ruleset schema; omitting either fails
-          # validation, the same way the pull_request rule needs
-          # required_review_thread_resolution.
+          # Both keys are required by the ruleset schema, in every file.
           strict_required_status_checks_policy: false
           required_status_checks:
-            - context: build
-            - context: Reuse linting job / linting
-            - context: check / Validate PR title
-            - context: DCO
-            - context: Analyze (actions)
-            - context: Analyze (javascript-typescript)
-            - context: Analyze (python)
-            - context: CodeQL
+            - context: "Analyze (javascript-typescript)"
+            - context: "Analyze (python)"
+            - context: "Reuse linting job / linting"
+            - context: "build"
+            - context: "check / Validate PR title"
