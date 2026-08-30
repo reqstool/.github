@@ -84,6 +84,20 @@
   ],
 
   packageRules: [
+    // `engines` is not an installable dependency -- it declares which runtimes the
+    // package supports. Pinning it to one exact version says "only this build works",
+    // which is a lie about compatibility and refuses installation on every other
+    // version. reqstool-vscode shipped 0.2.1 with `engines.vscode: "1.134.0"`, so it
+    // could not be installed on VS Code 1.135.0 at all (reqstool-vscode#117), and each
+    // VS Code release broke the build until the pin was bumped again.
+    //
+    // `replace` only rewrites the range when a new version falls outside it, so the
+    // declared floor stays put and stops generating PRs that undo the range.
+    {
+      matchDepTypes: ["engines"],
+      rangeStrategy: "replace",
+    },
+
 
     // =====================================================
     // Version constraints
