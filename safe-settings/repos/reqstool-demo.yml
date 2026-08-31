@@ -1,10 +1,10 @@
-# Per-repo override for reqstool-python-decorators.
+# Per-repo override for reqstool-demo.
 #
 # Appends this repo's own required contexts to the `protect-main` ruleset.
 # safe-settings merges arrays by name and `rules` by `type`, so these UNION
 # with the org-wide contexts in suborgs/all.yml rather than replacing them.
 #
-# Contexts are the INTERSECTION of a human PR (#95) and a Renovate PR (#96).
+# Contexts are the INTERSECTION of a human PR (#113) and a Renovate PR (#115).
 # `renovate/stability-days` reports only on Renovate's own PRs, so requiring it
 # would block every human PR here forever. The intersection also drops
 # path-filtered contexts (build-docs.yml runs only on `docs/**`), which would
@@ -17,9 +17,8 @@ rulesets:
           # Both keys are required by the ruleset schema, in every file.
           strict_required_status_checks_policy: false
           required_status_checks:
+            - context: "Analyze (java-kotlin)"
             - context: "Analyze (javascript-typescript)"
-            - context: "Analyze (python)"
-            - context: "Reuse linting job / linting"
             - context: "build (main)"
             - context: "build (pypi)"
             - context: "check / Validate PR title"

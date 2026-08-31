@@ -1,28 +1,25 @@
 # Per-repo override for reqstool-java-maven-plugin.
 #
-# Appends a required_status_checks rule to the `protect-main` ruleset in
-# suborgs/all.yml. safe-settings merges arrays by name and `rules` by `type`,
-# so the other four rules are left untouched.
+# Appends this repo's own required contexts to the `protect-main` ruleset.
+# safe-settings merges arrays by name and `rules` by `type`, so these UNION
+# with the org-wide contexts in suborgs/all.yml rather than replacing them.
 #
-# Contexts are the INTERSECTION of a human PR (#189) and a Renovate PR (#192) --
-# never the union. `renovate/stability-days` reports only on Renovate's own PRs,
-# so requiring it would block every human PR on this repo forever. Taking the
-# intersection also drops path-filtered contexts (build-docs.yml runs only on
-# `docs/**`), which would otherwise hang any PR that does not touch docs.
+# Contexts are the INTERSECTION of a human PR (#189) and a Renovate PR (#192).
+# `renovate/stability-days` reports only on Renovate's own PRs, so requiring it
+# would block every human PR here forever. The intersection also drops
+# path-filtered contexts (build-docs.yml runs only on `docs/**`), which would
+# otherwise hang any PR that does not touch docs.
 rulesets:
   - name: protect-main
     rules:
       - type: required_status_checks
         parameters:
-          # Both keys are required by the ruleset schema.
+          # Both keys are required by the ruleset schema, in every file.
           strict_required_status_checks_policy: false
           required_status_checks:
-            - context: "Analyze (actions)"
             - context: "Analyze (java-kotlin)"
             - context: "Analyze (javascript-typescript)"
             - context: "Check linting / linting"
-            - context: "CodeQL"
-            - context: "DCO"
             - context: "build (main)"
             - context: "build (pypi)"
             - context: "check / Validate PR title"
