@@ -24,6 +24,8 @@ This designates `@reqstool/maintainers` as the required reviewer for all files.
 
 ## Enabling enforcement
 
-Code-owner review is only enforced when **branch protection** is configured with
-`require_code_owner_reviews = true` for the target branch. This is managed via Terraform in the
-[reqstool/.github-private](https://github.com/reqstool/.github-private) repository.
+Code-owner review is only enforced when the branch ruleset asks for it. That is managed by
+safe-settings in this repository — the `pull_request` rule of the `protect-main` ruleset in
+[`safe-settings/suborgs/all.yml`](../safe-settings/suborgs/all.yml).
+
+It is currently `require_code_owner_review: false`, so nothing here is enforced yet.
