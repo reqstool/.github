@@ -1,7 +1,7 @@
 # Org-wide configuration (safe-settings)
 
 Org-wide repository configuration for the [reqstool](https://github.com/reqstool) GitHub
-organization. Moved here from `.github-private`, which is being retired.
+organization. Moved here from `.github-private`, which has since been deleted.
 
 ## Org-wide repository settings via `github/safe-settings`
 

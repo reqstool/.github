@@ -62,5 +62,5 @@ published to a registry, so a tag is the whole release.
 
 ## Related
 
-- [reqstool/.github-private](https://github.com/reqstool/.github-private) — Terraform IaC for repository settings
+- [`safe-settings/`](safe-settings/) — org-wide repository settings, rulesets and environments, as code
 - [reqstool Discussions](https://github.com/orgs/reqstool/discussions) — Community Q&A
