@@ -40,25 +40,16 @@ rulesets:
       # Redundant while merges are squash-only, but a ruleset that does not
       # depend on a repo setting staying put is one less thing to reason about.
       - type: required_linear_history
-      # Required on every repo. These three are the only contexts that report on
-      # BOTH a human PR and a Renovate PR in all 13 managed repos, so they are the
-      # only ones safe to require org-wide -- each repo unions its own build/lint
-      # contexts on top, from safe-settings/repos/<repo>.yml.
+      # Do NOT add a `required_status_checks` rule here. It looks like the obvious
+      # way to share contexts across repos, and it does not work: a ruleset may hold
+      # only one rule of each type, and safe-settings does not combine a rule here
+      # with the one in safe-settings/repos/<repo>.yml into a single rule. The PUT is
+      # rejected with `422 Invalid rule 'required_status_checks'` on repos that have
+      # both, and on repos where it does resolve, the per-repo rule wins outright --
+      # silently dropping whatever was declared here. Tried on 2026-08-30; it left
+      # six repos unset and weakened seven others before being reverted.
       #
-      # Deliberately NOT here: `Analyze (javascript-typescript)` does not report on
-      # reqstool.github.io, and `check / Validate PR title` does not report on
-      # reqstool-regression or reqstool-ai. A required context that never reports
-      # does not fail a PR, it blocks it forever on "Expected".
-      #
-      # `renovate/stability-days` must never appear in any of these lists: it
-      # reports only on Renovate's own PRs.
-      - type: required_status_checks
-        parameters:
-          strict_required_status_checks_policy: false
-          required_status_checks:
-            - context: "Analyze (actions)"
-            - context: "CodeQL"
-            - context: "DCO"
+      # Every repo's full context list belongs in its own repos/<repo>.yml.
       - type: pull_request
         parameters:
           required_approving_review_count: 1
