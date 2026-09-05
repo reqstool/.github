@@ -1,6 +1,8 @@
 restrictedRepos:
   exclude:
-    - .github
+    # .github is deliberately absent: it holds this config, but Renovate opens
+    # PRs against it too, and an unmanaged repo has no ruleset -- so no required
+    # checks, which is the only thing GitHub auto-merge waits for.
     - reqstool-test-packages
     # Archived repos are read-only; safe-settings can't create/update
     # labels or settings on them and the sync job fails otherwise.

@@ -1,0 +1,29 @@
+# Per-repo override for .github -- this repo, which holds the config below.
+#
+# The FULL required-context list lives here, not split with suborgs/all.yml.
+# A ruleset may hold only one rule of each type, and a required_status_checks
+# rule in all.yml plus one here does not combine into a single rule -- see the
+# note in all.yml. Keep every context for this repo in this file.
+#
+# Contexts are the INTERSECTION of a human PR (#128) and a Renovate PR (#145),
+# which here is just the four checks that run on every PR regardless of paths.
+#
+# BOTH of this repo's own workflows are path-filtered -- ci.yml to
+# .github/workflows|actions and tests, validate-renovate.yml to the preset --
+# so neither can be required: a required context that does not report blocks the
+# PR forever on "Expected". The cost is real and deliberate: on a Renovate PR
+# that does touch .github/workflows, `Lint workflows` and the `Test --` jobs run
+# but are not required, so auto-merge does not wait for them. Making ci.yml
+# unfiltered is what would close that, and is a separate decision.
+rulesets:
+  - name: protect-main
+    rules:
+      - type: required_status_checks
+        parameters:
+          # Both keys are required by the ruleset schema.
+          strict_required_status_checks_policy: false
+          required_status_checks:
+            - context: "Analyze (actions)"
+            - context: "Analyze (python)"
+            - context: "CodeQL"
+            - context: "DCO"
