@@ -35,7 +35,7 @@ jobs:
 
       - name: Install zizmor
         # renovate: datasource=pypi depName=zizmor
-        run: pip install zizmor==1.29.0
+        run: pip install zizmor==1.30.0
 
       - name: Install yamllint
         # renovate: datasource=pypi depName=yamllint
