@@ -1,5 +1,13 @@
+# ".github" is not redundant with "*". safe-settings matches these patterns with
+# minimatch and passes no options (lib/glob.js), so `dot` defaults to false and
+# "*" does not match a name beginning with a dot -- the same rule a shell glob
+# follows. Without the explicit entry, .github gets no suborg config, its
+# repos/.github.yml has no `protect-main` to merge into, and safe-settings POSTs
+# a lone required_status_checks rule that GitHub rejects: 422 "object is missing
+# required key: enforcement".
 suborgrepos:
   - "*"
+  - ".github"
 
 # Workaround for safe-settings shared-object mutation bug:
 # Without a suborg entry, all repos share the same repoConfig reference via
