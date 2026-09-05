@@ -1,0 +1,36 @@
+# Per-repo override for .github -- this repo, which holds the config below.
+#
+# The FULL required-context list lives here, not split with suborgs/all.yml.
+# A ruleset may hold only one rule of each type, and a required_status_checks
+# rule in all.yml plus one here does not combine into a single rule -- see the
+# note in all.yml. Keep every context for this repo in this file.
+#
+# Four contexts are the INTERSECTION of a human PR (#128) and a Renovate PR
+# (#145): the checks that run here regardless of paths. The other four are
+# ci.yml's jobs, which this PR unfilters precisely so they can be required --
+# this repo's Renovate PRs bump the actions its own release workflows run on,
+# and leaving that ungated is reqstool/.github#111 in the admin repo.
+#
+# validate-renovate.yml stays path-filtered and stays out: it fires only on the
+# preset, so requiring it would block every PR that does not touch the preset
+# forever on "Expected".
+#
+# These contexts are ci.yml's job `name:` values, not its job ids, and they are
+# matched literally -- em dash and `$/` included. Renaming a job there is a
+# breaking change here.
+rulesets:
+  - name: protect-main
+    rules:
+      - type: required_status_checks
+        parameters:
+          # Both keys are required by the ruleset schema.
+          strict_required_status_checks_policy: false
+          required_status_checks:
+            - context: "Analyze (actions)"
+            - context: "Analyze (python)"
+            - context: "CodeQL"
+            - context: "DCO"
+            - context: "Lint workflows"
+            - context: "Test — $/ resolves to this commit"
+            - context: "Test — composite actions"
+            - context: "Test — release artifacts"

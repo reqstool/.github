@@ -107,6 +107,28 @@ labels:
     - name: renovate-type-node
       color: "3c873a"
       description: "Node.js dependency update"
+    # No repo uses these ecosystems today, but the preset already labels them.
+    # An undeclared label is created by GitHub on first use in a random colour,
+    # which safe-settings then leaves alone -- declaring them keeps that from
+    # being how the org's label set grows.
+    - name: renovate-type-maven-plugin
+      color: "c71a36"
+      description: "Maven plugin update"
+    - name: renovate-type-spring
+      color: "6db33f"
+      description: "Spring dependency update"
+    - name: renovate-type-spring-boot
+      color: "2e6b2e"
+      description: "Spring Boot dependency update"
+    - name: renovate-type-container
+      color: "2496ed"
+      description: "Container image update"
+    - name: renovate-type-go
+      color: "00add8"
+      description: "Go dependency update"
+    - name: renovate-type-ansible
+      color: "ee0000"
+      description: "Ansible dependency update"
 
     # ---------------------------------------------------------------
     # Renovate version classification labels — traffic-light scheme
