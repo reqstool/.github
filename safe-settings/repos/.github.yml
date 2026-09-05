@@ -5,16 +5,19 @@
 # rule in all.yml plus one here does not combine into a single rule -- see the
 # note in all.yml. Keep every context for this repo in this file.
 #
-# Contexts are the INTERSECTION of a human PR (#128) and a Renovate PR (#145),
-# which here is just the four checks that run on every PR regardless of paths.
+# Four contexts are the INTERSECTION of a human PR (#128) and a Renovate PR
+# (#145): the checks that run here regardless of paths. The other four are
+# ci.yml's jobs, which this PR unfilters precisely so they can be required --
+# this repo's Renovate PRs bump the actions its own release workflows run on,
+# and leaving that ungated is reqstool/.github#111 in the admin repo.
 #
-# BOTH of this repo's own workflows are path-filtered -- ci.yml to
-# .github/workflows|actions and tests, validate-renovate.yml to the preset --
-# so neither can be required: a required context that does not report blocks the
-# PR forever on "Expected". The cost is real and deliberate: on a Renovate PR
-# that does touch .github/workflows, `Lint workflows` and the `Test --` jobs run
-# but are not required, so auto-merge does not wait for them. Making ci.yml
-# unfiltered is what would close that, and is a separate decision.
+# validate-renovate.yml stays path-filtered and stays out: it fires only on the
+# preset, so requiring it would block every PR that does not touch the preset
+# forever on "Expected".
+#
+# These contexts are ci.yml's job `name:` values, not its job ids, and they are
+# matched literally -- em dash and `$/` included. Renaming a job there is a
+# breaking change here.
 rulesets:
   - name: protect-main
     rules:
@@ -27,3 +30,7 @@ rulesets:
             - context: "Analyze (python)"
             - context: "CodeQL"
             - context: "DCO"
+            - context: "Lint workflows"
+            - context: "Test — $/ resolves to this commit"
+            - context: "Test — composite actions"
+            - context: "Test — release artifacts"

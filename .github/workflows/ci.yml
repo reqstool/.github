@@ -6,11 +6,16 @@ on:
       - ".github/workflows/**"
       - ".github/actions/**"
       - "tests/**"
+  # Deliberately unfiltered, unlike the push trigger above. These jobs are
+  # required checks on protect-main, and a required check that does not report
+  # blocks the PR forever on "Expected" -- so the filter and the requirement
+  # cannot both exist. Requiring them is the point: this repo's Renovate PRs
+  # bump the actions its own release workflows run on, and GitHub auto-merge
+  # waits only for checks that are required.
+  #
+  # Nothing here reads the diff, so the jobs pass on a PR that touches none of
+  # the paths above; the cost is one CI run on every PR to this repo.
   pull_request:
-    paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-      - "tests/**"
 
 permissions:
   contents: read
