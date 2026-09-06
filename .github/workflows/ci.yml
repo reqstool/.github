@@ -1,7 +1,12 @@
 name: CI
 
 on:
+  # main only: a PR already gets these jobs from the pull_request trigger below,
+  # and without this the four contexts report twice on any PR that touches the
+  # paths -- once per trigger.
   push:
+    branches:
+      - main
     paths:
       - ".github/workflows/**"
       - ".github/actions/**"

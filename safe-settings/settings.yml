@@ -143,6 +143,9 @@ labels:
     - name: renovate-version-patch
       color: "0e8a16"
       description: "Patch version update"
+    - name: renovate-version-pin
+      color: "c2e0c6"
+      description: "Range pinned to the already-resolved exact version"
     - name: renovate-version-digest
       color: "c5def5"
       description: "Digest/pin update"

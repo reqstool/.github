@@ -20,15 +20,21 @@
   semanticCommitScope: "{{datasource}}",
 
   automergeType: "pr",
-  // false, not true. Both mechanisms wait for CI, but for different things:
   // GitHub's auto-merge waits only for the checks a ruleset marks *required*,
-  // while Renovate's own merge waits for the branch to be green outright.
-  // `protect-main` requires no status checks, so with `true` a PR was mergeable
-  // the moment it opened and minor/patch bumps landed before `build` finished --
-  // three failing builds reached reqstool-client's main that way
-  // (reqstool/.github#111). Waiting on the whole branch is also the rule that
-  // stays correct as CI changes, since it needs no per-repo list of contexts.
-  platformAutomerge: false,
+  // where Renovate's own merge waits for the branch to be green outright. This
+  // was false until every repo could tell GitHub what "green" means: when
+  // `protect-main` required no status checks, `true` made a PR mergeable the
+  // moment it opened, and three failing builds reached reqstool-client's main
+  // that way (reqstool/.github#111).
+  //
+  // That precondition now holds. All 14 repos carry a required_status_checks
+  // rule listing every check that runs on each of their PRs, verified in force
+  // rather than merely declared (reqstool/.github#146, #147).
+  //
+  // The requirement this creates: a new unfiltered CI job is not gated until it
+  // is added to that repo's list in safe-settings/repos/<repo>.yml. Renovate no
+  // longer notices it on its own.
+  platformAutomerge: true,
 
   branchPrefix: "renovate/",
 
@@ -151,6 +157,14 @@
       addLabels: ["renovate-version-patch"],
       automerge: true,
       minimumReleaseAge: "3 days",
+    },
+    // A pin replaces a range with the version already resolved in the lock file,
+    // so nothing new is installed and minimumReleaseAge has no release to
+    // measure against.
+    {
+      matchUpdateTypes: ["pin"],
+      addLabels: ["renovate-version-pin"],
+      automerge: true,
     },
     {
       matchUpdateTypes: ["digest"],
@@ -288,9 +302,12 @@
       semanticCommitType: "chore",
       semanticCommitScope: "github-actions",
       addLabels: ["renovate-type-cicd"],
-      // GitHub Actions use major version tags (v3 → v4) for routine updates;
-      // auto-merge these when all checks pass.
-      automerge: true,
+      // No `automerge` here on purpose. It used to sit unconditionally, and
+      // because this rule comes after the update-type rules it also won last-
+      // match-wins for MAJOR action bumps. A major is a changelog read, actions
+      // included -- input renames and node-runtime changes are exactly what a
+      // v3 → v4 tag carries. Minor and patch action updates still automerge via
+      // the update-type rules above.
     },
 
     // Everything but GitHub's own actions is pinned to a commit digest. A `v4`
