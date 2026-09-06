@@ -212,13 +212,22 @@
     // Spring ecosystem grouping (Maven + Gradle)
     // =====================================================
 
+    // Split, where this was one "spring ecosystem" group. Spring Framework and
+    // Spring Security are separate release trains on separate cadences, so one
+    // group across both couples updates that have no reason to move together.
+    // Within each project the modules DO share a version and must move
+    // together, which is what these two groups preserve.
     {
       matchManagers: ["maven", "gradle"],
-      matchPackageNames: [
-        "org.springframework{/,}**",
-        "org.springframework.security{/,}**"
-      ],
-      groupName: "spring ecosystem",
+      matchPackageNames: ["/^org\\.springframework:/"],
+      groupName: "spring framework",
+      addLabels: ["renovate-type-spring"],
+    },
+
+    {
+      matchManagers: ["maven", "gradle"],
+      matchPackageNames: ["/^org\\.springframework\\.security:/"],
+      groupName: "spring security",
       addLabels: ["renovate-type-spring"],
     },
 
@@ -238,10 +247,12 @@
       groupName: "maven bom",
     },
 
+    // Labelled, not grouped. Maven plugins share a kind, not a release train --
+    // surefire and compiler are unrelated artifacts, so bundling them means one
+    // bad release blocks every other plugin update in the same PR.
     {
       matchManagers: ["maven"],
       matchDepTypes: ["plugin"],
-      groupName: "maven plugins",
       addLabels: ["renovate-type-maven-plugin"],
     },
 
@@ -249,10 +260,10 @@
     // Gradle-specific tuning
     // =====================================================
 
+    // Labelled, not grouped, for the same reason as maven plugins above.
     {
       matchManagers: ["gradle"],
       matchDepTypes: ["plugin"],
-      groupName: "gradle plugins",
       addLabels: ["renovate-type-gradle-plugin"],
     },
 
@@ -343,14 +354,17 @@
       addLabels: ["renovate-type-go"],
     },
 
-    // =====================================================
-    // Generic grouping fallback (MUST BE LAST)
-    // =====================================================
-
-    {
-      matchManagers: ["maven", "gradle"],
-      groupName: "{{groupId}} packages",
-      matchPackageNames: ["/.*/"],
-    }
+    // There is deliberately no catch-all grouping rule here. One used to sit
+    // last, matching every maven and gradle package with
+    // `groupName: "{{groupId}} packages"`. `groupId` is not a Renovate template
+    // field, so it rendered empty and every update landed in a single group
+    // called "packages" -- and because packageRules are last-match-wins, that
+    // group also overrode every named group above it. It produced PRs like
+    // reqstool-demo#114, which bundled reqstool-java-annotations 1.0.0 -> 1.0.1
+    // with reqstool-maven-plugin 1.0.4 -> 1.1.0 under the title
+    // "fix(maven): update packages".
+    //
+    // Renovate's default is one PR per dependency, which is what we want: a
+    // group is only justified when its members must move together.
   ],
 }
