@@ -97,3 +97,35 @@ gh repo list reqstool --visibility public --no-archived --json name --jq '.[].na
 ```
 
 Repos with no supported language will fail gracefully and can be ignored.
+
+## Required status checks
+
+Each repo's full list of required contexts lives in `repos/<repo>.yml`, never shared
+via `suborgs/all.yml` — a ruleset holds one rule per type, and two `required_status_checks`
+rules do not merge into one.
+
+Since Renovate runs with `platformAutomerge: true`, these lists are what "green" means:
+GitHub's auto-merge waits for the required checks and nothing else. Three ways that
+decouples from reality, all of which fail quietly:
+
+- **A new CI job is ungated until it is listed.** Adding an unfiltered job to a workflow
+  does not gate anything by itself. Add its context to `repos/<repo>.yml` in the same PR.
+- **A renamed job breaks the ruleset.** Contexts are matched literally, em dashes and all,
+  so renaming a job silently drops its gate — or, if the old name stays required, blocks
+  every PR forever on *Expected*.
+- **Matrix legs are part of the context name.** GitHub appends matrix values even for a
+  single-entry matrix, so `Validate (fixtures/parent)` and `build (main)` are matrix-derived
+  and a matrix change is a ruleset change in the same PR. Today every matrix here is a
+  hard-coded list. If one ever needs to vary, point the ruleset at a non-matrix aggregator
+  job instead — `needs:` the matrix job, `if: always()`, failing unless the result is
+  `success` — which keeps one stable context whatever the legs do.
+
+`Analyze (<lang>)` is the case with no PR at all: those contexts come from CodeQL default
+setup, managed through the API and repo UI. Enabling a language adds a context nothing
+requires; **disabling one leaves a required context that never reports, which blocks every
+PR on that repo indefinitely.** Check the repo's `repos/<repo>.yml` whenever default-setup
+languages change.
+
+Never require `renovate/stability-days`. It reports only on Renovate's own PRs, so requiring
+it blocks every human PR forever. Derive a list as the intersection of a human PR and a
+Renovate PR, never the union, and exclude path-filtered workflows for the same reason.
