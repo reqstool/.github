@@ -149,6 +149,11 @@ labels:
     - name: renovate-version-digest
       color: "c5def5"
       description: "Digest/pin update"
+    # Outside the traffic-light scheme on purpose: a lock file refresh carries no
+    # semver risk level, it moves whatever the package manager resolves.
+    - name: renovate-version-lockfile
+      color: "6a737d"
+      description: "Lock file refresh (transitive dependencies)"
 
   exclude:
     - "^release"
