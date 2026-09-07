@@ -170,6 +170,22 @@
       matchUpdateTypes: ["digest"],
       addLabels: ["renovate-version-digest"],
     },
+    // The sixth updateType, and it matched none of the five above -- so these
+    // PRs carried no label, never automerged, and could not be filtered for.
+    //
+    // Automerged on purpose, and it cannot carry a soak: minimumReleaseAge does
+    // not apply to lockFileMaintenance at all, because Renovate delegates
+    // regeneration to the package manager and never sees the transitive
+    // versions it picks. CI is therefore the only gate, and since
+    // `rangeStrategy: "pin"` freezes every declared dependency, one of these is
+    // the only path by which a transitive dependency ever changes. The
+    // alternative was a queue nobody merges, which is how three of them reached
+    // three weeks old. Fires only where a lockfile exists -- three npm repos.
+    {
+      matchUpdateTypes: ["lockFileMaintenance"],
+      addLabels: ["renovate-version-lockfile"],
+      automerge: true,
+    },
 
     // =====================================================
     // Spring Boot — Maven
