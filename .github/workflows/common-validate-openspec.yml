@@ -36,5 +36,5 @@ jobs:
       - name: Validate OpenSpec specs
         run: |
           # renovate: datasource=npm depName=@fission-ai/openspec
-          npm install -g @fission-ai/openspec@1.13.1
+          npm install -g @fission-ai/openspec@1.13.2
           openspec validate --specs --strict
