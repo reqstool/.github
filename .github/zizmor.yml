@@ -32,3 +32,9 @@ rules:
     ignore:
       - action.yml
       - common-validate-openspec.yml
+
+  # actionlint rejects `$/` on a reusable-workflow `uses:`, so this one stays a
+  # relative path.
+  self-repository:
+    ignore:
+      - validate-renovate.yml
