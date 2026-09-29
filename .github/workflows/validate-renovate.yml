@@ -25,6 +25,6 @@ jobs:
     # `contents: read` -- asking for more than the caller granted is rejected.
     permissions:
       contents: read
-    uses: ./.github/workflows/common-validate-renovate.yml
+    uses: $/.github/workflows/common-validate-renovate.yml
     with:
       config-path: .github/renovate.json5
