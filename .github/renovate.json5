@@ -104,6 +104,14 @@
       rangeStrategy: "replace",
     },
 
+    // Likewise a package's own supported-Python range: a pin resolves `^3.13` to
+    // the newest 3.x, which `allowedVersions` below does not filter.
+    {
+      matchManagers: ["poetry", "pep621"],
+      matchDepNames: ["python"],
+      rangeStrategy: "replace",
+    },
+
 
     // =====================================================
     // Version constraints
