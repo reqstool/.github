@@ -115,14 +115,14 @@ jobs:
 
       - name: Upload VSIX artifact
         if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) != '' }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}
           path: "${{ inputs.working-directory }}/*.vsix"
 
       - name: Upload dist artifact
         if: ${{ hashFiles(format('{0}/*.vsix', inputs.working-directory)) == '' && hashFiles(format('{0}/dist/**', inputs.working-directory)) != '' }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
