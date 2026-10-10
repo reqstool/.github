@@ -56,7 +56,7 @@ jobs:
       - name: Report the resolved version
         run: mvn --batch-mode help:evaluate -Dexpression=project.version -q -DforceStdout
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}
           path: |
