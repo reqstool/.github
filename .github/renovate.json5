@@ -103,6 +103,14 @@
       matchDepTypes: ["engines"],
       rangeStrategy: "replace",
     },
+    // Poetry's `python` dependency is the same kind of declaration as `engines`:
+    // pinning it to one release locks out every other supported Python
+    // (reqstool-python-poetry-plugin#155 proposed `^3.13` -> `3.15.2`).
+    {
+      matchManagers: ["poetry"],
+      matchDepNames: ["python"],
+      rangeStrategy: "replace",
+    },
 
 
     // =====================================================
