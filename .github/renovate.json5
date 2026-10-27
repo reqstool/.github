@@ -382,5 +382,16 @@
     //
     // Renovate's default is one PR per dependency, which is what we want: a
     // group is only justified when its members must move together.
+
+    // Our own releases skip the soak, which guards against bad third-party
+    // releases. Last so it overrides the classification rules above.
+    {
+      matchPackageNames: [
+        "/^reqstool([-/]|$)/",
+        "/^@reqstool\\//",
+        "/^io\\.github\\.reqstool[.:]/",
+      ],
+      minimumReleaseAge: null,
+    },
   ],
 }
