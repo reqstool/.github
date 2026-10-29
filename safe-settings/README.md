@@ -13,7 +13,7 @@ Repository settings are enforced across all non-archived repos using
 Configuration files:
 - `settings.yml` — org-wide repository defaults
 - `suborgs/all.yml` — the `protect-main` ruleset and release environments
-- `repos/<repo>.yml` — that repo's full `required_status_checks` list
+- `repos/<repo>.yml` — that repo's full `required_status_checks` list; `.github.yml` also declares the `safe-settings` environment the sync job runs in
 - `deployment-settings.yml` — scope; this config is self-applied, `.github` included
 
 ### GitHub App setup (manual, one-time)

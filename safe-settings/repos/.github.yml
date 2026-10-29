@@ -34,3 +34,14 @@ rulesets:
             - context: "Test — $/ resolves to this commit"
             - context: "Test — composite actions"
             - context: "Test — release artifacts"
+
+# The sync job holds SAFE_SETTINGS_PRIVATE_KEY, an App key with admin on every
+# repo. As an environment secret restricted to main it reaches no workflow run
+# from another branch. No reviewer: that would hold the weekly sync for approval.
+# Merged by name with stable and test from suborgs/all.yml, which still apply.
+environments:
+  - name: safe-settings
+    deployment_branch_policy:
+      protected_branches: false
+      custom_branch_policies:
+        - main

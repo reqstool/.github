@@ -19,6 +19,8 @@ permissions: {}
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # Holds the App key; see safe-settings/repos/.github.yml.
+    environment: safe-settings
     # safe-settings authenticates as its own GitHub App, so the workflow
     # token only ever needs to read this repo's config.
     permissions:
