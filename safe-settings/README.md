@@ -48,7 +48,10 @@ safe-settings requires a GitHub App installed on the org:
 3. **Generate a Private Key** from the app settings page (download the `.pem`)
 4. **Add to this repo** (https://github.com/reqstool/.github/settings):
    - Variable `SAFE_SETTINGS_APP_ID` → the App ID integer
-   - Secret `SAFE_SETTINGS_PRIVATE_KEY` → full contents of the `.pem` file
+   - Secret `SAFE_SETTINGS_PRIVATE_KEY` → full contents of the `.pem` file, as a
+     secret of the `safe-settings` environment (main only, declared in
+     `repos/.github.yml`), not a repository secret:
+     `gh secret set SAFE_SETTINGS_PRIVATE_KEY --env safe-settings -R reqstool/.github < key.pem`
 
 > **Note:** Secret scanning (for public repos) is not configurable via safe-settings
 > YAML and must be enabled manually per repo or via the GitHub org security settings.
