@@ -16,7 +16,7 @@ inputs:
     description: "asciidoctor-kroki version."
     required: false
     # renovate: datasource=npm depName=asciidoctor-kroki
-    default: "0.18.1"
+    default: "0.18.2"
   playbook:
     description: "Path to the Antora playbook."
     required: false
