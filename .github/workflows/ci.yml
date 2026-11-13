@@ -128,7 +128,7 @@ jobs:
       # Renovate bumps the git-cliff version but cannot compute its digest, so
       # this is what turns that PR red instead of auto-merging a broken release.
       - name: Install git-cliff
-        uses: ./.github/actions/setup-git-cliff
+        uses: $/.github/actions/setup-git-cliff
 
   # Proves the `$/` self-repository syntax actually resolves on a runner, rather
   # than only that actionlint and zizmor tolerate it. Worth its own job: `$/` is
