@@ -44,7 +44,7 @@
 
   stopUpdatingLabel: "bot-renovate-stop",
 
-  dependencyDashboard: false,
+  dependencyDashboard: { enabled: false },
 
   prConcurrentLimit: 10,
   prHourlyLimit: 5,
