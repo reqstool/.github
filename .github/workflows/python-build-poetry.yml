@@ -90,7 +90,7 @@ jobs:
         if: ${{ inputs.install-self-as-plugin }}
         run: |
           poetry build --format wheel
-          poetry self add "$(find dist -name '*.whl' | sort | tail -1)"
+          poetry self add "$PWD/$(find dist -name '*.whl' | sort | tail -1)"
 
       - run: poetry run pytest
 
@@ -127,7 +127,7 @@ jobs:
         if: ${{ inputs.install-self-as-plugin }}
         run: |
           poetry build --format wheel
-          poetry self add "$(find dist -name '*.whl' | sort | tail -1)"
+          poetry self add "$PWD/$(find dist -name '*.whl' | sort | tail -1)"
 
       - name: Run tests (with coverage)
         if: ${{ inputs.coverage-source != '' }}
