@@ -12,7 +12,8 @@ on:
         description: "Python version to use."
         required: false
         type: string
-        default: "3.13"
+        # renovate: datasource=python-version depName=python
+        default: "3.13.18"
       coverage-source:
         description: "Package name passed to --cov=<name>. Empty = run tests without coverage."
         required: false
@@ -31,6 +32,14 @@ on:
         required: false
         type: string
         default: "dist"
+      post-test-command:
+        description: >
+          Optional repo-specific command run through hatch's dev env after tests
+          and build, before upload -- e.g. self-applying the project's own
+          annotation processor into build/reqstool/annotations.yml.
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -75,7 +84,19 @@ jobs:
       - name: Build
         run: hatch build
 
+      - name: Run post-test command
+        if: ${{ inputs.post-test-command != '' }}
+        env:
+          POST_TEST_COMMAND: ${{ inputs.post-test-command }}
+        run: eval "$POST_TEST_COMMAND"
+
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
+
+      # build/ output (junit, coverage, annotations) for the reqstool verify job.
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}-build
+          path: ${{ inputs.working-directory }}/build/

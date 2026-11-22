@@ -1,0 +1,69 @@
+name: Verify (reqstool)
+
+# The reqstool gate shared by every repo: install reqstool from PyPI and from
+# reqstool-client@main, then run `reqstool status` over the caller's checkout
+# plus the build/ output (junit, coverage, annotations) produced by the build
+# workflow. Replaces the identical tail of each repo's inline build job.
+
+on:
+  workflow_call:
+    inputs:
+      build-artifact:
+        description: "Name of the artifact holding the build/ output (see the build workflows' build-artifact-name)."
+        required: false
+        type: string
+        default: "dist-build"
+      reqstool-path:
+        description: "Path to the reqstool data directory, relative to repo root."
+        required: false
+        type: string
+        default: "docs/reqstool"
+      fail-if-incomplete:
+        description: "Fail unless every requirement is complete."
+        required: false
+        type: boolean
+        default: true
+      ref:
+        description: "Branch, tag or SHA to check out. Empty = the caller's ref."
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        reqstool-source: [pypi, main]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: ${{ inputs.build-artifact }}
+          path: build
+
+      # Composite actions of this repo are addressed by full path: `./` would
+      # resolve against the caller's workspace, not this repository.
+      - uses: reqstool/.github/.github/actions/install-reqstool@ci/385-shared-python-build # SPIKE: pin to release SHA
+        with:
+          reqstool-source: ${{ matrix.reqstool-source }}
+
+      # Not yet in the latest PyPI release; supplementary to the status gate.
+      - if: matrix.reqstool-source == 'main'
+        uses: reqstool/.github/.github/actions/validate-reqstool@ci/385-shared-python-build # SPIKE: pin to release SHA
+        with:
+          reqstool-path: ${{ inputs.reqstool-path }}
+
+      - uses: reqstool/.github/.github/actions/reqstool-status@ci/385-shared-python-build # SPIKE: pin to release SHA
+        with:
+          reqstool-path: ${{ inputs.reqstool-path }}
+          fail-if-incomplete: ${{ inputs.fail-if-incomplete }}
