@@ -117,14 +117,18 @@
     // Version constraints
     // =====================================================
 
+    // Tool-version policy (reqstool/.github#385): Python follows the latest
+    // release (no cap); Java and Node follow the latest LTS only.
     {
-      matchDepNames: ["python"],
-      allowedVersions: "<=3.13",
+      // Odd Node majors are never LTS.
+      matchDepNames: ["node"],
+      allowedVersions: "/^\\d*[02468]([.]|$)/",
     },
 
     {
+      // Java LTS releases. Add the next LTS here when it ships (every 2 years).
       matchDepNames: ["java", "openjdk", "temurin"],
-      allowedVersions: "<=21",
+      allowedVersions: "/^(21|25|29)([.+]|$)/",
     },
 
     {
