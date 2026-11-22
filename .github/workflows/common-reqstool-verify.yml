@@ -51,19 +51,20 @@ jobs:
           name: ${{ inputs.build-artifact }}
           path: build
 
-      # Composite actions of this repo are addressed by full path: `./` would
-      # resolve against the caller's workspace, not this repository.
-      - uses: reqstool/.github/.github/actions/install-reqstool@ci/385-shared-python-build # SPIKE: pin to release SHA
+      # Composite actions of this repo are addressed by full path and pinned to a
+      # released SHA like any other caller (`./` would resolve against the caller's
+      # workspace); Renovate bumps them with every other reqstool/.github pin.
+      - uses: reqstool/.github/.github/actions/install-reqstool@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
         with:
           reqstool-source: ${{ matrix.reqstool-source }}
 
       # Not yet in the latest PyPI release; supplementary to the status gate.
       - if: matrix.reqstool-source == 'main'
-        uses: reqstool/.github/.github/actions/validate-reqstool@ci/385-shared-python-build # SPIKE: pin to release SHA
+        uses: reqstool/.github/.github/actions/validate-reqstool@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
         with:
           reqstool-path: ${{ inputs.reqstool-path }}
 
-      - uses: reqstool/.github/.github/actions/reqstool-status@ci/385-shared-python-build # SPIKE: pin to release SHA
+      - uses: reqstool/.github/.github/actions/reqstool-status@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
         with:
           reqstool-path: ${{ inputs.reqstool-path }}
           fail-if-incomplete: ${{ inputs.fail-if-incomplete }}
