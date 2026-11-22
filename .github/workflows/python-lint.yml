@@ -4,10 +4,11 @@ on:
   workflow_call:
     inputs:
       python-version:
-        description: "Python version to use. Empty = tool-versions.yml in reqstool/.github."
+        description: "Python version to use."
         required: false
         type: string
-        default: ""
+        # renovate: datasource=python-version depName=python
+        default: "3.13.18"
       package-manager:
         description: "Package manager: hatch or poetry."
         required: false
@@ -30,28 +31,9 @@ jobs:
         with:
           persist-credentials: false
 
-      # tool-versions.yml at the commit of *this* reusable workflow, so the version
-      # is pinned by whatever SHA the caller pins this workflow to.
-      - name: Read tool versions
-        uses: actions/checkout@v7.0.1
-        with:
-          repository: reqstool/.github
-          ref: ${{ github.job_workflow_sha }}
-          path: .reqstool-github
-          sparse-checkout: tool-versions.yml
-          persist-credentials: false
-
-      - name: Resolve Python version
-        id: tv
-        env:
-          INPUT_VERSION: ${{ inputs.python-version }}
-        run: |
-          v="${INPUT_VERSION:-$(sed -n 's/^python: *"\(.*\)"/\1/p' .reqstool-github/tool-versions.yml)}"
-          echo "python=$v" >> "$GITHUB_OUTPUT"
-
       - uses: actions/setup-python@v7.1.0
         with:
-          python-version: ${{ steps.tv.outputs.python }}
+          python-version: ${{ inputs.python-version }}
 
       - name: Install hatch and lint
         if: ${{ inputs.package-manager == 'hatch' }}
