@@ -24,7 +24,7 @@ on:
         type: boolean
         default: true
       ref:
-        description: "Branch, tag or SHA to check out. Empty = the caller's ref."
+        description: "Branch, tag or SHA to check out. Empty = the default checkout of the caller (its event ref)."
         required: false
         type: string
         default: ""
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref }}
 
       - uses: actions/download-artifact@v8.0.2
         with:
