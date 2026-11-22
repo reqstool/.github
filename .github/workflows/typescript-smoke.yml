@@ -1,0 +1,62 @@
+name: Smoke (TypeScript, any OS)
+
+# Runs a caller-supplied command (e.g. `npm test`) on a matrix of operating
+# systems against the caller's checkout, so path, line-ending and encoding bugs
+# that Linux cannot show surface.
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "JSON array of runner labels."
+        required: false
+        type: string
+        default: '["windows-latest","macos-latest"]'
+      node-version:
+        description: "Node.js version to use."
+        required: false
+        type: string
+        # renovate: datasource=node-version depName=node
+        default: "26"
+      working-directory:
+        description: "Project root relative to repo root. Default '.' for repo-root projects."
+        required: false
+        type: string
+        default: "."
+      command:
+        description: "bash command run from the working directory after `npm ci`."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.os) }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - run: npm ci
+
+      - name: Run command
+        env:
+          SMOKE_COMMAND: ${{ inputs.command }}
+        run: eval "$SMOKE_COMMAND"
