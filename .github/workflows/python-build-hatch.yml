@@ -77,6 +77,9 @@ jobs:
       # renovate: datasource=pypi depName=hatch
       - run: pip install hatch==1.18.2
 
+      # Build first: e2e tests of plugins install the wheel/sdist from dist/.
+      - run: hatch build
+
       - run: hatch run dev:pytest
 
   build:
@@ -102,6 +105,10 @@ jobs:
       # renovate: datasource=pypi depName=hatch
       - run: pip install hatch==1.18.2
 
+      # Build before the tests: e2e tests of plugins install the wheel/sdist from dist/.
+      - name: Build
+        run: hatch build
+
       - name: Run tests (with coverage)
         if: ${{ inputs.coverage-source != '' }}
         env:
@@ -115,9 +122,6 @@ jobs:
       - name: Run tests (without coverage)
         if: ${{ inputs.coverage-source == '' }}
         run: hatch run dev:pytest --junitxml=build/junit.xml
-
-      - name: Build
-        run: hatch build
 
       - name: Run post-test command
         if: ${{ inputs.post-test-command != '' }}
