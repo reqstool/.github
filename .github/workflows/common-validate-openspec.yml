@@ -29,12 +29,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7.0.0
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ inputs.node-version }}
 
       - name: Validate OpenSpec specs
         run: |
           # renovate: datasource=npm depName=@fission-ai/openspec
-          npm install -g @fission-ai/openspec@1.13.2
+          npm install -g @fission-ai/openspec@2.1.0
           openspec validate --specs --strict
