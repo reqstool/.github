@@ -7,7 +7,8 @@ on:
         description: "Python version to use."
         required: false
         type: string
-        default: "3.13"
+        # renovate: datasource=python-version depName=python
+        default: "3.13.18"
       package-manager:
         description: "Package manager: hatch or poetry."
         required: false
@@ -23,7 +24,7 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -37,7 +38,8 @@ jobs:
       - name: Install hatch and lint
         if: ${{ inputs.package-manager == 'hatch' }}
         run: |
-          pip install hatch
+          # renovate: datasource=pypi depName=hatch
+          pip install hatch==1.18.2
           hatch run dev:black --check --verbose src tests
           hatch run dev:flake8
 
