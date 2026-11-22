@@ -14,10 +14,12 @@ on:
         type: string
         default: '["windows-latest","macos-latest"]'
       python-version:
-        description: "Python version to use."
+        description: >
+          Python version. Minor only: exact patch releases are not published for
+          every runner OS (3.13.18 exists for Linux, not for Windows/macOS).
         required: false
         type: string
-        default: "3.13.18"
+        default: "3.13"
       dist-artifact:
         description: "Name of the artifact holding the wheel (see python-build-hatch.yml artifact-name)."
         required: false
