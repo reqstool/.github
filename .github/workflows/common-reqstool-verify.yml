@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: "dist-build"
+      build-directory:
+        description: "Directory the build artifact is extracted to, relative to repo root (build for Python/Gradle, target for Maven)."
+        required: false
+        type: string
+        default: "build"
       reqstool-path:
         description: "Path to the reqstool data directory, relative to repo root."
         required: false
@@ -43,7 +48,7 @@ jobs:
       - uses: actions/download-artifact@v8.0.2
         with:
           name: ${{ inputs.build-artifact }}
-          path: build
+          path: ${{ inputs.build-directory }}
 
       # Composite actions of this repo are addressed by full path and pinned to a
       # released SHA like any other caller (`./` would resolve against the caller's
