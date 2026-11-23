@@ -51,12 +51,12 @@ jobs:
           fetch-tags: true
           ref: ${{ inputs.ref || github.ref }}
 
-      - uses: actions/setup-python@v7.0.0
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: ${{ inputs.python-version }}
 
       # renovate: datasource=pypi depName=hatch
-      - run: pip install hatch==1.18.1
+      - run: pip install hatch==1.18.2
 
       - name: Run tests (with coverage)
         if: ${{ inputs.coverage-source != '' }}
