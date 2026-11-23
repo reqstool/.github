@@ -46,16 +46,16 @@ jobs:
           name: ${{ inputs.build-artifact }}
           path: ${{ inputs.build-directory }}
 
-      - uses: reqstool/.github/.github/actions/install-reqstool@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
+      - uses: reqstool/.github/.github/actions/install-reqstool@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
         with:
           reqstool-source: ${{ matrix.reqstool-source }}
 
       - if: matrix.reqstool-source == 'main'
-        uses: reqstool/.github/.github/actions/validate-reqstool@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
+        uses: reqstool/.github/.github/actions/validate-reqstool@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
         with:
           reqstool-path: ${{ inputs.reqstool-path }}
 
-      - uses: reqstool/.github/.github/actions/reqstool-status@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
+      - uses: reqstool/.github/.github/actions/reqstool-status@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
         with:
           reqstool-path: ${{ inputs.reqstool-path }}
           fail-if-incomplete: ${{ inputs.fail-if-incomplete }}
