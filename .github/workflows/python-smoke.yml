@@ -1,9 +1,5 @@
 name: Smoke (Python wheel, any OS)
 
-# Installs the wheel produced by the Linux build job on a matrix of operating
-# systems and runs a caller-supplied command against the caller's checkout.
-# Deliberately does not use hatch: the point is to exercise the *installed*
-# package the way a user gets it, and to keep hatch off Windows.
 
 on:
   workflow_call:
@@ -67,8 +63,6 @@ jobs:
         env:
           REQUIREMENTS: ${{ inputs.requirements }}
         run: |
-          # Run from a directory without the source tree on sys.path is not
-          # needed: src-layout projects do not shadow the installed wheel.
           # shellcheck disable=SC2086
           pip install dist/*.whl $REQUIREMENTS
 

@@ -58,8 +58,6 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      # Full history and tags: the version is derived from git state by
-      # Nisse, so a shallow clone would build the wrong number rather than fail.
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
@@ -113,7 +111,6 @@ jobs:
             ${{ inputs.working-directory }}/target/*.pom
           if-no-files-found: ignore
 
-      # target/ output (test reports, annotations, reqstool zip) for the reqstool verify job.
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}-build
