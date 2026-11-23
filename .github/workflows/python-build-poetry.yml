@@ -151,7 +151,6 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
 
-      # build/ output (junit, coverage, annotations) for the reqstool verify job.
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}-build
