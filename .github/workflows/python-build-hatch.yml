@@ -77,7 +77,6 @@ jobs:
       # renovate: datasource=pypi depName=hatch
       - run: pip install hatch==1.18.2
 
-      # Build first: e2e tests of plugins install the wheel/sdist from dist/.
       - run: hatch build
 
       - run: hatch run dev:pytest
@@ -105,7 +104,6 @@ jobs:
       # renovate: datasource=pypi depName=hatch
       - run: pip install hatch==1.18.2
 
-      # Build before the tests: e2e tests of plugins install the wheel/sdist from dist/.
       - name: Build
         run: hatch build
 
@@ -134,7 +132,6 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
 
-      # build/ output (junit, coverage, annotations) for the reqstool verify job.
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}-build

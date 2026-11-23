@@ -1,9 +1,5 @@
 name: Smoke (Java, any OS)
 
-# Runs a caller-supplied command (e.g. `mvn -B verify`, `./gradlew build`) on a
-# matrix of operating systems against the caller's checkout, so path, line-ending
-# and locale bugs that Linux cannot show surface. Java projects have no
-# installable wheel equivalent, so the build itself is the smoke.
 
 on:
   workflow_call:

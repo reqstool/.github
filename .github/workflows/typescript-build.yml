@@ -93,9 +93,6 @@ jobs:
 
       - run: npm ci
 
-      # The command is `eval`ed by design -- callers supply their own installer
-      # line. Read from the environment rather than interpolated into the script
-      # body so the value cannot terminate the surrounding shell construct.
       - name: Install dependency
         if: ${{ inputs.dependency-version != '' && inputs.dependency-install-command != '' }}
         env:
@@ -122,8 +119,6 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      # Full history and tags: the release flow derives the version from git state,
-      # so a shallow clone would build the wrong number rather than fail.
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
@@ -156,8 +151,6 @@ jobs:
           CMD="${INSTALL_COMMAND/\{version\}/$DEP_VERSION}"
           eval "$CMD"
 
-      # Built before the tests so a post-test command (e2e against dist/,
-      # self-applied tags) can use the build output.
       - run: npm run build
 
       - name: Run tests
@@ -197,7 +190,6 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
 
-      # build/ output (junit, coverage, annotations) for the reqstool verify job.
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}-build

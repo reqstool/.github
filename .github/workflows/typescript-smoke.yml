@@ -1,8 +1,5 @@
 name: Smoke (TypeScript, any OS)
 
-# Runs a caller-supplied command (e.g. `npm test`) on a matrix of operating
-# systems against the caller's checkout, so path, line-ending and encoding bugs
-# that Linux cannot show surface.
 
 on:
   workflow_call:
