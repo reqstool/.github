@@ -1,0 +1,93 @@
+name: Release
+
+# Releases this repository: a tag is the whole release, there is nothing to build or
+# publish. See RELEASING.md for what each step does. Callers pin the shared workflows
+# by the tag created here, so cut one after changing them.
+#
+# Run it with `dry-run` left on (the default) to see the version git-cliff resolved,
+# then again with it off. The `approve` job then waits for a reviewer on the run page
+# and shows the version, before anything is tagged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (semver, no v prefix), e.g. 1.2.2. Leave empty to auto-detect from Conventional Commits."
+        required: false
+        type: string
+      prerelease:
+        description: "Publish as a release candidate instead of a release: never promoted to latest. The number is chosen for you."
+        required: false
+        type: choice
+        options: [none, rc, b, a]
+        default: none
+      ref:
+        description: "Branch to release from. Leave empty for the branch this workflow was dispatched on."
+        required: false
+        type: string
+      force:
+        description: "Allow a version that disagrees with the auto-detected one."
+        required: false
+        type: boolean
+        default: false
+      dry-run:
+        description: "Validate and preview only -- nothing tagged, nothing published."
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    uses: reqstool/.github/.github/workflows/common-release-prepare.yml@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
+    permissions:
+      contents: read
+    with:
+      version-format: semver
+      version: ${{ inputs.version }}
+      prerelease: ${{ inputs.prerelease }}
+      ref: ${{ inputs.ref }}
+      force: ${{ inputs.force }}
+      dry-run: ${{ inputs.dry-run }}
+
+  # THE APPROVAL GATE -- bound to the `stable` environment, so it sits pending until a
+  # required reviewer approves it on the run page. Nothing to publish here, so the gate
+  # sits before tagging instead of before a registry upload.
+  approve:
+    needs: prepare
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    environment: stable
+    permissions: {}
+    steps:
+      - name: Version to be released
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: echo "Approving release $VERSION" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  tag:
+    needs: [prepare, approve]
+    if: ${{ !inputs.dry-run }}
+    uses: reqstool/.github/.github/workflows/common-release-tag.yml@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      version-format: semver
+      ref: ${{ inputs.ref }}
+
+  promote:
+    needs: [prepare, tag]
+    if: ${{ !inputs.dry-run }}
+    uses: reqstool/.github/.github/workflows/common-release-promote.yml@6fc8d3e3d4c3fdf7a83cb7b7a274e4761486ca71 # 1.2.1
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
