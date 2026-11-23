@@ -1,12 +1,5 @@
 name: Release
 
-# Releases this repository: a tag is the whole release, there is nothing to build or
-# publish. See RELEASING.md for what each step does. Callers pin the shared workflows
-# by the tag created here, so cut one after changing them.
-#
-# Run it with `dry-run` left on (the default) to see the version git-cliff resolved,
-# then again with it off. The `approve` job then waits for a reviewer on the run page
-# and shows the version, before anything is tagged.
 
 on:
   workflow_dispatch:
@@ -56,9 +49,6 @@ jobs:
       force: ${{ inputs.force }}
       dry-run: ${{ inputs.dry-run }}
 
-  # THE APPROVAL GATE -- bound to the `stable` environment, so it sits pending until a
-  # required reviewer approves it on the run page. Nothing to publish here, so the gate
-  # sits before tagging instead of before a registry upload.
   approve:
     needs: prepare
     if: ${{ !inputs.dry-run }}
