@@ -127,6 +127,12 @@
     },
 
     {
+      matchFileNames: [".github/workflows/safe-settings.yml"],
+      matchDepNames: ["node"],
+      allowedVersions: "<25",
+    },
+
+    {
       // Java LTS releases. Add the next LTS here when it ships (every 2 years).
       matchDepNames: ["java", "openjdk", "temurin"],
       allowedVersions: "/^(21|25|29)([.+]|$)/",
