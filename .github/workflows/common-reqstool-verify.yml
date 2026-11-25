@@ -1,0 +1,61 @@
+name: Verify (reqstool)
+
+
+on:
+  workflow_call:
+    inputs:
+      build-artifact:
+        description: "Name of the artifact holding the build/ output (see the build workflows' build-artifact-name)."
+        required: false
+        type: string
+        default: "dist-build"
+      build-directory:
+        description: "Directory the build artifact is extracted to, relative to repo root (build for Python/Gradle, target for Maven)."
+        required: false
+        type: string
+        default: "build"
+      reqstool-path:
+        description: "Path to the reqstool data directory, relative to repo root."
+        required: false
+        type: string
+        default: "docs/reqstool"
+      fail-if-incomplete:
+        description: "Fail unless every requirement is complete."
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        reqstool-source: [pypi, main]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: ${{ inputs.build-artifact }}
+          path: ${{ inputs.build-directory }}
+
+      - uses: reqstool/.github/.github/actions/install-reqstool@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
+        with:
+          reqstool-source: ${{ matrix.reqstool-source }}
+
+      - if: matrix.reqstool-source == 'main'
+        uses: reqstool/.github/.github/actions/validate-reqstool@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
+        with:
+          reqstool-path: ${{ inputs.reqstool-path }}
+
+      - uses: reqstool/.github/.github/actions/reqstool-status@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
+        with:
+          reqstool-path: ${{ inputs.reqstool-path }}
+          fail-if-incomplete: ${{ inputs.fail-if-incomplete }}

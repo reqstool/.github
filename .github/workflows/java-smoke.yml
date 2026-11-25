@@ -1,0 +1,52 @@
+name: Smoke (Java, any OS)
+
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "JSON array of runner labels."
+        required: false
+        type: string
+        default: '["windows-latest","macos-latest"]'
+      java-version:
+        description: "JDK version to use."
+        required: false
+        type: string
+        # renovate: datasource=java-version depName=java
+        default: "25"
+      command:
+        description: "bash command run from the repo root."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.os) }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-java@v6.3.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+
+      - name: Run command
+        env:
+          SMOKE_COMMAND: ${{ inputs.command }}
+        run: eval "$SMOKE_COMMAND"

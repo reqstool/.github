@@ -1,0 +1,83 @@
+name: Release
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (semver, no v prefix), e.g. 1.2.2. Leave empty to auto-detect from Conventional Commits."
+        required: false
+        type: string
+      prerelease:
+        description: "Publish as a release candidate instead of a release: never promoted to latest. The number is chosen for you."
+        required: false
+        type: choice
+        options: [none, rc, b, a]
+        default: none
+      ref:
+        description: "Branch to release from. Leave empty for the branch this workflow was dispatched on."
+        required: false
+        type: string
+      force:
+        description: "Allow a version that disagrees with the auto-detected one."
+        required: false
+        type: boolean
+        default: false
+      dry-run:
+        description: "Validate and preview only -- nothing tagged, nothing published."
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    uses: reqstool/.github/.github/workflows/common-release-prepare.yml@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
+    permissions:
+      contents: read
+    with:
+      version-format: semver
+      version: ${{ inputs.version }}
+      prerelease: ${{ inputs.prerelease }}
+      ref: ${{ inputs.ref }}
+      force: ${{ inputs.force }}
+      dry-run: ${{ inputs.dry-run }}
+
+  approve:
+    needs: prepare
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    environment: stable
+    permissions: {}
+    steps:
+      - name: Version to be released
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: echo "Approving release $VERSION" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  tag:
+    needs: [prepare, approve]
+    if: ${{ !inputs.dry-run }}
+    uses: reqstool/.github/.github/workflows/common-release-tag.yml@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      version-format: semver
+      ref: ${{ inputs.ref }}
+
+  promote:
+    needs: [prepare, tag]
+    if: ${{ !inputs.dry-run }}
+    uses: reqstool/.github/.github/workflows/common-release-promote.yml@91cd368066d5458b5d46bdf34c4d8ca483f6633f # 1.2.2
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}

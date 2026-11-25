@@ -9,10 +9,18 @@ on:
         type: string
         default: "."
       node-version:
-        description: "Node.js version to use."
+        description: "Node.js used for the build and the artifacts (the latest LTS)."
         required: false
         type: string
-        default: "24"
+        # renovate: datasource=node-version depName=node
+        default: "26"
+      node-versions:
+        description: >
+          JSON array of Node.js versions the test suite runs on, on Linux. One entry
+          by policy (latest LTS); adding a leg is a one-line change.
+        required: false
+        type: string
+        default: '["26"]'
       use-xvfb:
         description: "Wrap test commands with xvfb-run (required for VS Code extension tests)."
         required: false
@@ -43,6 +51,14 @@ on:
         required: false
         type: string
         default: "dist"
+      post-test-command:
+        description: >
+          Optional repo-specific bash command run after build and tests, before
+          upload -- e.g. e2e tests against dist/ and self-applying the project's
+          own tags processor into build/reqstool/annotations.yml.
+        required: false
+        type: string
+        default: ""
       version:
         description: "Stamp package.json with this version before building. Empty = leave as-is."
         required: false
@@ -53,7 +69,51 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    name: test (${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ${{ fromJSON(inputs.node-versions) }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+
+      - run: npm ci
+
+      - name: Install dependency
+        if: ${{ inputs.dependency-version != '' && inputs.dependency-install-command != '' }}
+        env:
+          INSTALL_COMMAND: ${{ inputs.dependency-install-command }}
+          DEP_VERSION: ${{ inputs.dependency-version }}
+        run: |
+          CMD="${INSTALL_COMMAND/\{version\}/$DEP_VERSION}"
+          eval "$CMD"
+
+      - name: Run tests
+        if: ${{ !inputs.use-xvfb }}
+        run: npm run test
+
+      - name: Run tests (headless display)
+        if: ${{ inputs.use-xvfb }}
+        run: |
+          xvfb-run --auto-servernum npm run test-with-report
+          xvfb-run --auto-servernum npm run test:ui
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -82,9 +142,6 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: npm version "$VERSION" --no-git-tag-version --allow-same-version
 
-      # The command is `eval`ed by design -- callers supply their own installer
-      # line. Read from the environment rather than interpolated into the script
-      # body so the value cannot terminate the surrounding shell construct.
       - name: Install dependency
         if: ${{ inputs.dependency-version != '' && inputs.dependency-install-command != '' }}
         env:
@@ -93,6 +150,8 @@ jobs:
         run: |
           CMD="${INSTALL_COMMAND/\{version\}/$DEP_VERSION}"
           eval "$CMD"
+
+      - run: npm run build
 
       - name: Run tests
         if: ${{ !inputs.use-xvfb }}
@@ -104,7 +163,11 @@ jobs:
           xvfb-run --auto-servernum npm run test-with-report
           xvfb-run --auto-servernum npm run test:ui
 
-      - run: npm run build
+      - name: Run post-test command
+        if: ${{ inputs.post-test-command != '' }}
+        env:
+          POST_TEST_COMMAND: ${{ inputs.post-test-command }}
+        run: eval "$POST_TEST_COMMAND"
 
       # A dist/ tree carries the version in no filename, which is what
       # common-release-assets.yml asserts against. `npm pack` is npm's analog of
@@ -126,3 +189,9 @@ jobs:
         with:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.working-directory }}/dist/
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}-build
+          path: ${{ inputs.working-directory }}/build/
+          if-no-files-found: ignore

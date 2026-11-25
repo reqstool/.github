@@ -23,6 +23,5 @@ rulesets:
             - context: "Analyze (python)"
             - context: "CodeQL"
             - context: "DCO"
-            - context: "Reuse linting job / linting"
-            - context: "build"
             - context: "check / Validate PR title"
+            - context: "ci"

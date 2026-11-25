@@ -1,0 +1,72 @@
+name: Smoke (Python wheel, any OS)
+
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "JSON array of runner labels."
+        required: false
+        type: string
+        default: '["windows-latest","macos-latest"]'
+      python-version:
+        description: >
+          Python version. Minor only: exact patch releases are not published for
+          every runner OS (3.13.18 exists for Linux, not for Windows/macOS).
+        required: false
+        type: string
+        default: "3.13"
+      dist-artifact:
+        description: "Name of the artifact holding the wheel (see python-build-hatch.yml artifact-name)."
+        required: false
+        type: string
+        default: "dist"
+      requirements:
+        description: "Extra pip requirements installed next to the wheel, space separated (e.g. pytest)."
+        required: false
+        type: string
+        default: ""
+      command:
+        description: "bash command run from the repo root after the wheel is installed."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.os) }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: ${{ inputs.dist-artifact }}
+          path: dist
+
+      - name: Install wheel
+        env:
+          REQUIREMENTS: ${{ inputs.requirements }}
+        run: |
+          # shellcheck disable=SC2086
+          pip install dist/*.whl $REQUIREMENTS
+
+      - name: Run command
+        env:
+          SMOKE_COMMAND: ${{ inputs.command }}
+        run: eval "$SMOKE_COMMAND"

@@ -7,22 +7,36 @@ on:
         description: "JDK version to use."
         required: false
         type: string
-        default: "21"
+        # renovate: datasource=java-version depName=java
+        default: "25"
+      build-tool:
+        description: "Build tool: maven or gradle."
+        required: false
+        type: string
+        default: "maven"
 
 permissions:
   contents: read
 
 jobs:
-  lint:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-java@v6.3.0
         with:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
 
-      - run: mvn clean validate
+      - name: Check formatting (Maven)
+        if: ${{ inputs.build-tool == 'maven' }}
+        run: mvn --batch-mode clean validate
+
+      - name: Check formatting (Gradle)
+        if: ${{ inputs.build-tool == 'gradle' }}
+        run: ./gradlew --console=plain checkFormat

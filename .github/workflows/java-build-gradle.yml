@@ -9,10 +9,18 @@ on:
         type: string
         default: "."
       java-version:
-        description: "JDK version to use."
+        description: "JDK used for the build and the artifacts (the latest LTS)."
         required: false
         type: string
-        default: "21"
+        # renovate: datasource=java-version depName=java
+        default: "25"
+      java-versions:
+        description: >
+          JSON array of JDKs the test suite runs on, on Linux. One entry by policy
+          (latest LTS); adding a leg is a one-line change.
+        required: false
+        type: string
+        default: '["25"]'
       ref:
         description: "Branch, tag or SHA to build. Empty = the caller's ref."
         required: false
@@ -26,20 +34,52 @@ on:
         required: false
         type: string
         default: "dist"
+      post-test-command:
+        description: >
+          Optional repo-specific bash command run after tests, before upload --
+          e.g. self-applying the project's own annotation processor into
+          build/reqstool/annotations.yml.
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  test:
+    name: test (${{ matrix.java }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ${{ fromJSON(inputs.java-versions) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
       # Full history and tags: the version is derived from git state by
-      # git-dyn-semver, so a shallow clone would build the wrong number rather
-      # than fail.
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-java@v6.3.0
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+
+      - run: ./gradlew --console=plain clean build
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
@@ -52,13 +92,26 @@ jobs:
           java-version: ${{ inputs.java-version }}
           distribution: temurin
 
-      - run: ./gradlew clean build
+      - name: Build and run tests
+        run: ./gradlew --console=plain clean build
 
       - name: Report the resolved version
-        run: ./gradlew printVersion -q
+        run: ./gradlew --console=plain printVersion -q
+
+      - name: Run post-test command
+        if: ${{ inputs.post-test-command != '' }}
+        env:
+          POST_TEST_COMMAND: ${{ inputs.post-test-command }}
+        run: eval "$POST_TEST_COMMAND"
 
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.artifact-name }}
-          path: ${{ inputs.working-directory }}/build/libs/*.jar
+          path: |
+            ${{ inputs.working-directory }}/build/libs/*.jar
           if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}-build
+          path: ${{ inputs.working-directory }}/build/

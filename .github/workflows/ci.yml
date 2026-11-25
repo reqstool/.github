@@ -45,7 +45,7 @@ jobs:
 
       - name: Install zizmor
         # renovate: datasource=pypi depName=zizmor
-        run: pip install zizmor==1.32.0
+        run: pip install zizmor==1.33.0
 
       - name: Install yamllint
         # renovate: datasource=pypi depName=yamllint
@@ -122,7 +122,7 @@ jobs:
       - name: Check reusable workflow permissions
         run: |
           # renovate: datasource=pypi depName=PyYAML
-          pip install --quiet PyYAML==6.0.3
+          pip install --quiet PyYAML==6.0.4
           python3 tests/actions/check-permissions.py
 
       # Renovate bumps the git-cliff version but cannot compute its digest, so
