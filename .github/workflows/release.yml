@@ -54,7 +54,9 @@ jobs:
     needs: prepare
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
-    environment: stable
+    environment:
+      name: stable
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     permissions: {}
     steps:
       - name: Version to be released
