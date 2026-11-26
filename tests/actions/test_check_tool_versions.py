@@ -111,6 +111,46 @@ class FindProblems(unittest.TestCase):
         self.assertIn("no longer needed", problems[0])
 
 
+class Discovery(unittest.TestCase):
+    def check(self, tree):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            for rel, text in tree.items():
+                path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text)
+            return ctv.find_problems(root, [])
+
+    def test_yaml_extension_workflows_are_read(self):
+        tree = {
+            ".github/workflows/a.yml": workflow("node-version", "26"),
+            ".github/workflows/b.yaml": workflow("node-version", "24"),
+        }
+        self.assertEqual(len(self.check(tree)), 1)
+
+    def test_composite_actions_are_read_with_either_extension(self):
+        for name in ("action.yml", "action.yaml"):
+            tree = {
+                ".github/workflows/a.yml": workflow("node-version", "26"),
+                f".github/actions/x/{name}": "inputs:\n  node-version:\n    default: \"24\"\n",
+            }
+            self.assertEqual(len(self.check(tree)), 1, name)
+
+    def test_a_wildcard_matches_the_same_major(self):
+        tree = {
+            ".github/workflows/a.yml": workflow("node-version", "26.x"),
+            ".github/workflows/b.yml": setup_node_workflow("26.13.1"),
+        }
+        self.assertEqual(self.check(tree), [])
+
+    def test_a_wildcard_does_not_match_another_major(self):
+        tree = {
+            ".github/workflows/a.yml": workflow("node-version", "24.x"),
+            ".github/workflows/b.yml": setup_node_workflow("26.13.1"),
+        }
+        self.assertEqual(len(self.check(tree)), 1)
+
+
 class Repository(unittest.TestCase):
     def test_defaults_agree(self):
         exceptions = ctv.load_exceptions(REPO / "tests" / "actions" / "tool-version-exceptions.yml")

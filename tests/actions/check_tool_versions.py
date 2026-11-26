@@ -34,7 +34,7 @@ INPUT_NAME = re.compile(r"^(?P<tool>.+)-version$")
 
 
 def files(root):
-    for pattern in (".github/workflows/*.yml", ".github/actions/*/action.yml"):
+    for pattern in (".github/workflows/*.y*ml", ".github/actions/*/action.y*ml"):
         yield from sorted(root.glob(pattern))
 
 
@@ -74,7 +74,10 @@ def records(root):
 
 
 def normalise(version):
-    return version.lstrip("v").split(".")
+    parts = version.lstrip("v").split(".")
+    while len(parts) > 1 and parts[-1] in ("x", "X", "*"):
+        parts.pop()
+    return parts
 
 
 def keys(entries):
