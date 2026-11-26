@@ -1,0 +1,18 @@
+- file: .github/workflows/safe-settings.yml
+  tool: node
+  reason: safe-settings 2.1.18 crashes on Node 25+ (#403); held until #404
+- file: .github/workflows/python-smoke.yml
+  tool: python
+  reason: smokes the lowest supported Python (3.13), minor only
+- file: .github/workflows/java-publish-to-maven.yml
+  tool: java
+  reason: still 21 when the other Java workflows moved to 25; no renovate annotation, so nothing bumps it
+- file: .github/workflows/common-build-docs.yml
+  tool: node
+  reason: Antora docs default to Node 24; no renovate annotation, so nothing bumps it
+- file: .github/workflows/common-publish-to-github-pages.yml
+  tool: node
+  reason: Antora docs default to Node 24; no renovate annotation, so nothing bumps it
+- file: .github/workflows/common-validate-openspec.yml
+  tool: node
+  reason: OpenSpec validation defaults to Node 24; no renovate annotation, so nothing bumps it
