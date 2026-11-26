@@ -42,7 +42,7 @@ One command that reproduces the evidence above:
 
 ## Checklist
 
-- [ ] I have reviewed and followed the [contributing guidelines](../CONTRIBUTING.md).
+- [ ] I have reviewed and followed the [contributing guidelines](https://github.com/reqstool/.github/blob/main/CONTRIBUTING.md).
 - [ ] I have run a local build and made sure all tests pass.
-- [ ] I have signed off the [Developer Certificate of Origin](../dco.txt) (`git commit -s`).
-- [ ] I have read the [Code of Conduct](../CODE_OF_CONDUCT.md) and agree to abide by it.
+- [ ] I have signed off the [Developer Certificate of Origin](https://github.com/reqstool/.github/blob/main/dco.txt) (`git commit -s`).
+- [ ] I have read the [Code of Conduct](https://github.com/reqstool/.github/blob/main/CODE_OF_CONDUCT.md) and agree to abide by it.
