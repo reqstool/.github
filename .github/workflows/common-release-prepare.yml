@@ -175,7 +175,7 @@ jobs:
             MODE="dry run — nothing tagged, nothing published"
           else
             HEADING="Release"
-            MODE="awaiting approval, then $FINISH"
+            MODE="awaiting approval — review the release notes below, then approve; then $FINISH"
           fi
           {
             echo "### $HEADING"

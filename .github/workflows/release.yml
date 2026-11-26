@@ -50,6 +50,7 @@ jobs:
       dry-run: ${{ inputs.dry-run }}
 
   approve:
+    name: approve ${{ needs.prepare.outputs.version }} (changelog in the prepare job summary)
     needs: prepare
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
