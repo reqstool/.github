@@ -175,6 +175,60 @@ jobs:
           fi
           echo "\$/ resolved to this commit and the action behaves correctly."
 
+  # Separate jobs rather than an os matrix on the ones above: a matrix renames
+  # the check contexts that protect-main requires, which then never report.
+  test-actions-cross-os:
+    name: Test — composite actions (${{ matrix.os }})
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run the action test suite
+        run: bash tests/actions/run-tests.sh
+
+  test-self-repository-syntax-cross-os:
+    name: Test — $/ resolves to this commit (${{ matrix.os }})
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: A valid version passes
+        uses: $/.github/actions/check-version
+        with:
+          version: "1.2.3rc1"
+          version-format: pep440
+
+      - name: An invalid version is rejected
+        id: reject
+        continue-on-error: true
+        uses: $/.github/actions/check-version
+        with:
+          version: "not-a-version"
+          version-format: pep440
+
+      - name: Assert the rejection actually happened
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.reject.outcome }}
+        run: |
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "::error::check-version accepted 'not-a-version' — the action resolved but does not work"
+            exit 1
+          fi
+
   # tests/common/*.yml and tests/{java,python,typescript}/*.yml are validated by
   # actionlint above. act-based execution is not attempted: act does not
   # propagate `with:` inputs into a nested workflow_call, and a reusable workflow
