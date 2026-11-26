@@ -125,6 +125,9 @@ jobs:
           pip install --quiet PyYAML==6.0.4
           python3 tests/actions/check-permissions.py
 
+      - name: Run the Python tests
+        run: python3 -m unittest discover -s tests/actions -p 'test_*.py'
+
       # Renovate bumps the git-cliff version but cannot compute its digest, so
       # this is what turns that PR red instead of auto-merging a broken release.
       - name: Install git-cliff
