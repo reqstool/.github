@@ -13,6 +13,11 @@ class ApprovalPointsAtTheNotes(unittest.TestCase):
         self.assertIn("needs.prepare.outputs.version", job["name"])
         self.assertIn("prepare job summary", job["name"])
 
+    def test_approve_environment_links_to_the_run_summary(self):
+        job = yaml.safe_load((WORKFLOWS / "release.yml").read_text())["jobs"]["approve"]
+        self.assertEqual(job["environment"]["name"], "stable")
+        self.assertIn("github.run_id", job["environment"]["url"])
+
     def test_prepare_summary_tells_the_reviewer_to_read_the_notes(self):
         text = (WORKFLOWS / "common-release-prepare.yml").read_text()
         self.assertIn("review the release notes below, then approve", text)
