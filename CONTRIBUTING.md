@@ -33,6 +33,22 @@ discussions, use [GitHub Discussions](https://github.com/orgs/reqstool/discussio
 5. **Push** your branch and open a Pull Request against `main`.
 6. Fill in the PR template completely. Link any related issues.
 
+### Pull request evidence
+
+Every PR that changes behaviour shows how it was verified. The PR template has four sections for it:
+
+| Section  | What to write                                                                                      |
+|----------|----------------------------------------------------------------------------------------------------|
+| SPEC     | **Required** and **Forbidden** behaviour. Forbidden matters most, e.g. "Linux and macOS output unchanged". |
+| Red      | The test command and its failing output on `main`. `N/A: <reason>` for CI, docs and config.        |
+| Checks   | Tests, types, lint, coverage of changed lines, and mutation or property tests where required. Mark each `ran` or `not run: <reason>`. |
+| Rerun    | One command that reproduces the evidence.                                                          |
+
+Commit the failing test first and the fix in a later commit, so the red run is visible in the history.
+Never weaken a test to make it pass, and never claim a check that did not run.
+
+Repositories name the paths that need a mutation or property test in their own `CONTRIBUTING.md`.
+
 ---
 
 ## Commit Messages

@@ -6,6 +6,40 @@ Please include a summary of the change and which issue is fixed. If no issue exi
 
 Fixes #
 
+## SPEC
+
+**Required:**
+
+-
+
+**Forbidden:** (what must not change, e.g. "Linux and macOS output unchanged")
+
+-
+
+Trivial change? Write `N/A: <reason>`.
+
+## Red
+
+The test command and its failing output on `main`, ideally from a separate test-first commit.
+No behaviour change (CI, docs, config)? Write `N/A: <reason>`.
+
+## Checks
+
+Mark each one `ran` or `not run: <reason>`.
+
+- Tests:
+- Types:
+- Lint:
+- Coverage of changed lines:
+- Mutation or property tests (required for the risk paths in the repository's CONTRIBUTING.md):
+
+## Rerun
+
+One command that reproduces the evidence above:
+
+```
+```
+
 ## Checklist
 
 - [ ] I have reviewed and followed the [contributing guidelines](../CONTRIBUTING.md).
