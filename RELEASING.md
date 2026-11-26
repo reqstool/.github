@@ -70,18 +70,19 @@ Tags carry no `v` prefix, in any ecosystem.
 7. **The run pauses for approval.** The job that publishes to the real index is bound to the
    `stable` environment, so it sits pending until a required reviewer approves it. There is no
    draft to publish by hand — this is the confirmation step, and it sits here rather than
-   earlier because publishing and promoting are the only steps that cannot be undone. By this
-   point the artifacts exist and their version has been asserted against the tag.
+   earlier because publishing and marking the release as latest are the only steps that
+   cannot be undone. By this point the artifacts exist and their version has been asserted
+   against the tag.
 
-8. On approval the artifacts go to the real index, and the prerelease is promoted to the
+8. On approval the artifacts go to the real index, and the prerelease is marked as the
    latest release. **Whether a release candidate reaches this step at all is per-ecosystem** —
-   see the notes below. Promotion is always a no-op for one regardless:
-   `common-release-promote.yml` skips the API call internally whenever the version is a
+   see the notes below. Marking it latest is always a no-op for one regardless:
+   `common-release-finalize.yml` skips the API call internally whenever the version is a
    candidate, so it stays a prerelease permanently either way.
 
-Promotion is deliberately last: until it runs, nothing resolving "the latest release" can
+Marking the release as latest is deliberately last: until it runs, nothing resolving "the latest release" can
 see what was built, so every step that can fail has already succeeded by the time anyone is
-served it. Promotion itself is one API call against a release that already has its
+served it. That step is one API call against a release that already has its
 artifacts.
 
 ### The two environments
@@ -93,14 +94,14 @@ creates a missing environment on demand with no protection rules.
 
 | Environment | Holds | Reviewer |
 |---|---|---|
-| `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces — and, downstream of it, promotion to latest. | **required** |
+| `stable` | Publishing to a real index — PyPI, Maven Central, the Plugin Portal, the marketplaces — and, downstream of it, marking the release as latest. | **required** |
 | `test` | Currently unused. Existed for Test PyPI, which no longer exists as a publish target — see the PyPI notes below. Still declared, in case a future non-stable index needs it. | none |
 
 **The approval is on the publish, not on the tag.** That is deliberate, and it is the
 opposite of where an earlier version of this flow put it. Everything before the publish is
 reversible and invisible: a tag can be deleted, and the release is a prerelease, which
 `/releases/latest` excludes. Approving `stable` gates the two things that cannot be taken
-back — the upload to a real index, and promotion to latest, which is the moment a release
+back — the upload to a real index, and marking the release as latest, which is the moment a release
 becomes the one people get.
 
 Approving there also means approving with more to go on. By then the artifacts exist and
@@ -205,7 +206,7 @@ into the caller's workflows, which is why this is four pieces rather than one.
 | `common-release-prepare.yml` | Resolves the version, generates the notes, writes the summary. Nothing durable — a dry run is this and nothing else. |
 | `common-release-tag.yml` | The approval gate. Tags, pushes, creates the prerelease. |
 | `common-release-assets.yml` | Asserts the artifacts carry the version, attaches them. |
-| `common-release-promote.yml` | Promotes to latest. A no-op for a release candidate. |
+| `common-release-finalize.yml` | Marks the release as latest. A no-op for a release candidate. `common-release-promote.yml` is the same workflow under its old name, kept until the consumers have moved. |
 
 ```
 prepare  (dry-run stops here)
@@ -216,7 +217,7 @@ prepare  (dry-run stops here)
   → publish               actions/download-dists + an inline publish step,
                           in the caller's own workflow (PyPI)
                           / java-publish-to-maven.yml / …
-  → promote               common-release-promote.yml
+  → finalize              common-release-finalize.yml
 ```
 
 `common-check-release.yml` is separate: it guards a release created by hand in the UI,

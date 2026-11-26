@@ -164,9 +164,9 @@ jobs:
           FORMAT: ${{ inputs.version-format }}
         run: |
           if [ "$PRERELEASE" = "true" ]; then
-            FINISH="tag + prerelease + assets, then STOP — not promoted to latest"
+            FINISH="tag + prerelease + assets, then STOP — not marked as latest"
           else
-            FINISH="tag + prerelease + assets + publish + promote to latest"
+            FINISH="tag + prerelease + assets + publish + mark as latest"
           fi
           # Test the value: "false" is non-empty, so ${DRY_RUN:+...} would expand
           # for both.

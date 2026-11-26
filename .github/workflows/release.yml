@@ -9,7 +9,7 @@ on:
         required: false
         type: string
       prerelease:
-        description: "Publish as a release candidate instead of a release: never promoted to latest. The number is chosen for you."
+        description: "Publish as a release candidate instead of a release: never marked as latest. The number is chosen for you."
         required: false
         type: choice
         options: [none, rc, b, a]

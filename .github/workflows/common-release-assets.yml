@@ -3,7 +3,7 @@ name: Release — assert and attach artifacts
 # Third of four. Takes the artifacts the caller built *from the tag*, checks they
 # carry the version they claim to, and attaches them to the prerelease.
 #
-# Runs before promotion, which is the invariant that matters: nothing is ever
+# Runs before the release is marked latest, which is the invariant that matters: nothing is ever
 # served at /releases/latest without its artifacts already in place. The old flow
 # attached them after publication, leaving a window in which the release existed
 # with nothing to download.

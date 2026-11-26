@@ -6,17 +6,14 @@ import unittest
 
 import yaml
 
-WORKFLOW = (
-    pathlib.Path(__file__).resolve().parents[2]
-    / ".github"
-    / "workflows"
-    / "common-release-promote.yml"
-)
+WORKFLOWS = pathlib.Path(__file__).resolve().parents[2] / ".github" / "workflows"
+WORKFLOW = WORKFLOWS / "common-release-finalize.yml"
+DEPRECATED = WORKFLOWS / "common-release-promote.yml"
 
 
-def steps():
-    doc = yaml.safe_load(WORKFLOW.read_text())
-    return doc["jobs"]["promote"]["steps"]
+def steps(path=WORKFLOW):
+    (job,) = yaml.safe_load(path.read_text())["jobs"].values()
+    return job["steps"]
 
 
 def step_by_id(step_id):
@@ -50,8 +47,8 @@ def run_guard(gh_script):
         return proc, output.read_text()
 
 
-class PromoteGuard(unittest.TestCase):
-    def test_existing_release_is_promoted(self):
+class FinalizeGuard(unittest.TestCase):
+    def test_existing_release_is_finalized(self):
         proc, out = run_guard("exit 0\n")
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertIn("exists=true", out)
@@ -72,6 +69,11 @@ class PromoteGuard(unittest.TestCase):
         self.assertTrue(later)
         for step in later:
             self.assertIn("steps.release.outputs.exists == 'true'", step["if"], step["name"])
+
+
+class DeprecatedPromote(unittest.TestCase):
+    def test_still_does_exactly_what_finalize_does(self):
+        self.assertEqual(steps(DEPRECATED), steps(WORKFLOW))
 
 
 if __name__ == "__main__":
