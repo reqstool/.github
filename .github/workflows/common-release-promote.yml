@@ -43,9 +43,11 @@ jobs:
           elif [[ "$err" == *"HTTP 404"* ]]; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Release $VERSION does not exist, so there is nothing to promote. An earlier job failed."
-            echo "### Nothing to promote" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "\`$VERSION\` was never created. See the failed job above." >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "### Nothing to promote"
+              echo ""
+              echo "\`$VERSION\` was never created. See the failed job above."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "$err" >&2
             exit 1
