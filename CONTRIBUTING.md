@@ -44,7 +44,7 @@ Every PR that changes behaviour shows how it was verified. The PR template has f
 | Checks   | Tests, types, lint, coverage of changed lines, and mutation or property tests where required. Mark each `ran` or `not run: <reason>`. |
 | Rerun    | One command that reproduces the evidence.                                                          |
 
-Commit the failing test first and the fix in a later commit, so the red run is visible in the history.
+When there is a failing test, commit it first and the fix in a later commit, so the red run is visible in the history.
 Never weaken a test to make it pass, and never claim a check that did not run.
 
 Repositories name the paths that need a mutation or property test in their own `CONTRIBUTING.md`.
