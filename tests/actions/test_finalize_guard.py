@@ -8,11 +8,10 @@ import yaml
 
 WORKFLOWS = pathlib.Path(__file__).resolve().parents[2] / ".github" / "workflows"
 WORKFLOW = WORKFLOWS / "common-release-finalize.yml"
-DEPRECATED = WORKFLOWS / "common-release-promote.yml"
 
 
-def steps(path=WORKFLOW):
-    (job,) = yaml.safe_load(path.read_text())["jobs"].values()
+def steps():
+    (job,) = yaml.safe_load(WORKFLOW.read_text())["jobs"].values()
     return job["steps"]
 
 
@@ -69,11 +68,6 @@ class FinalizeGuard(unittest.TestCase):
         self.assertTrue(later)
         for step in later:
             self.assertIn("steps.release.outputs.exists == 'true'", step["if"], step["name"])
-
-
-class DeprecatedPromote(unittest.TestCase):
-    def test_still_does_exactly_what_finalize_does(self):
-        self.assertEqual(steps(DEPRECATED), steps(WORKFLOW))
 
 
 if __name__ == "__main__":

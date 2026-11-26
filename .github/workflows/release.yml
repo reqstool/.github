@@ -72,10 +72,10 @@ jobs:
       version-format: semver
       ref: ${{ inputs.ref }}
 
-  promote:
+  finalize:
     needs: [prepare, tag]
     if: ${{ !inputs.dry-run }}
-    uses: reqstool/.github/.github/workflows/common-release-promote.yml@6340edb1ebc6c9cbeb3f533738ba8f9672a4d313 # 1.2.3
+    uses: reqstool/.github/.github/workflows/common-release-finalize.yml@6340edb1ebc6c9cbeb3f533738ba8f9672a4d313 # 1.2.3
     permissions:
       contents: write
     with:

@@ -206,7 +206,7 @@ into the caller's workflows, which is why this is four pieces rather than one.
 | `common-release-prepare.yml` | Resolves the version, generates the notes, writes the summary. Nothing durable — a dry run is this and nothing else. |
 | `common-release-tag.yml` | The approval gate. Tags, pushes, creates the prerelease. |
 | `common-release-assets.yml` | Asserts the artifacts carry the version, attaches them. |
-| `common-release-finalize.yml` | Marks the release as latest. A no-op for a release candidate. `common-release-promote.yml` is the same workflow under its old name, kept until the consumers have moved. |
+| `common-release-finalize.yml` | Marks the release as latest. A no-op for a release candidate. |
 
 ```
 prepare  (dry-run stops here)
