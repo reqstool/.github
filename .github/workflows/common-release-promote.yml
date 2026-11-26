@@ -1,4 +1,4 @@
-name: Release — promote to latest
+name: Release — promote to latest (deprecated, use common-release-finalize.yml)
 
 # Last of four. The moment the release becomes real: one flag flip, with the
 # artifacts already in place, so there is no window in which /releases/latest
@@ -12,7 +12,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: "The version to promote."
+        description: "The version to mark as latest."
         required: true
         type: string
       prerelease:
@@ -42,9 +42,9 @@ jobs:
             echo "exists=true" >> "$GITHUB_OUTPUT"
           elif [[ "$err" == *"HTTP 404"* ]]; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Release $VERSION does not exist, so there is nothing to promote. An earlier job failed."
+            echo "::warning::Release $VERSION does not exist, so there is nothing to finalize. An earlier job failed."
             {
-              echo "### Nothing to promote"
+              echo "### Nothing to finalize"
               echo ""
               echo "\`$VERSION\` was never created. See the failed job above."
             } >> "$GITHUB_STEP_SUMMARY"
@@ -53,7 +53,7 @@ jobs:
             exit 1
           fi
 
-      - name: Promote the prerelease
+      - name: Mark the release as latest
         if: ${{ !inputs.prerelease && steps.release.outputs.exists == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

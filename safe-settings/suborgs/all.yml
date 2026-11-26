@@ -72,7 +72,7 @@ rulesets:
 # Environments the release flow binds to; see RELEASING.md in reqstool/.github.
 environments:
   # The approval, and the only one. It gates publishing to a real index and,
-  # downstream of that, promotion to latest -- the two steps that cannot be taken
+  # downstream of that, marking it latest -- the two steps that cannot be taken
   # back. Tagging is deliberately not gated: a tag can be deleted and the release
   # it creates is a prerelease, so there is nothing there to protect.
   #

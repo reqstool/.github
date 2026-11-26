@@ -105,8 +105,8 @@ jobs:
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$VERSION"
 
       # Every release starts life as a prerelease, including one that is destined
-      # to become latest. Promotion is a separate, later step -- see
-      # common-release-promote.yml.
+      # to become latest. Marking it latest is a separate, later step -- see
+      # common-release-finalize.yml.
       - name: Create the prerelease
         id: create
         env:
