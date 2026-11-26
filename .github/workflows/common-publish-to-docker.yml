@@ -37,17 +37,29 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Detect prerelease
+        id: pre
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$VERSION" =~ (a|b|rc)\.?[0-9]+$ ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ inputs.registry }}/${{ inputs.image-name }}
           tags: |
-            type=semver,pattern={{version}},value=${{ inputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.version }}
-            type=semver,pattern={{major}},value=${{ inputs.version }},enable=${{ !startsWith(inputs.version, '0.') }}
+            type=raw,value=${{ inputs.version }},enable=${{ steps.pre.outputs.prerelease == 'true' }}
+            type=semver,pattern={{version}},value=${{ inputs.version }},enable=${{ steps.pre.outputs.prerelease != 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.version }},enable=${{ steps.pre.outputs.prerelease != 'true' }}
+            type=semver,pattern={{major}},value=${{ inputs.version }},enable=${{ steps.pre.outputs.prerelease != 'true' && !startsWith(inputs.version, '0.') }}
             type=sha
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ steps.pre.outputs.prerelease != 'true' }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
