@@ -18,6 +18,10 @@ class ApprovalPointsAtTheNotes(unittest.TestCase):
         self.assertEqual(job["environment"]["name"], "stable")
         self.assertIn("github.run_id", job["environment"]["url"])
 
+    def test_release_notes_heading_outranks_the_changelog_groups(self):
+        text = (WORKFLOWS / "common-release-prepare.yml").read_text()
+        self.assertIn('echo "## Release notes"', text)
+
     def test_prepare_summary_tells_the_reviewer_to_read_the_notes(self):
         text = (WORKFLOWS / "common-release-prepare.yml").read_text()
         self.assertIn("review the release notes below, then approve", text)
