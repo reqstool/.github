@@ -54,7 +54,7 @@ published to a registry, so a tag is the whole release.
 | `SECURITY.md` | Vulnerability reporting policy |
 | `dco.txt` | Developer Certificate of Origin v1.1 |
 | `.github/ISSUE_TEMPLATE/` | Issue templates (bug report, feature request, other) |
-| `.github/PULL_REQUEST_TEMPLATE/` | Pull request template |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Pull request template |
 | `.github/CODEOWNERS.md` | Code ownership documentation |
 | `.github/semantic.yml` | Semantic PR / commit configuration ([semantic-prs](https://github.com/apps/semantic-prs)) |
 | `.github/workflows/check-semantic-pr.yml` | Reusable workflow for semantic PR validation |
