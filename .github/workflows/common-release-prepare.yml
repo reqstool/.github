@@ -190,7 +190,7 @@ jobs:
             echo "| Previous tag | \`${LATEST:-(none yet)}\` |"
             echo "| Mode | $MODE |"
             echo ""
-            echo "#### Release notes"
+            echo "## Release notes"
             echo ""
             cat NOTES.md 2>/dev/null || echo "_(not generated — an earlier step failed)_"
             echo ""
