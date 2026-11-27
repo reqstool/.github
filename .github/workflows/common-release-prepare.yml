@@ -175,7 +175,7 @@ jobs:
             MODE="dry run — nothing tagged, nothing published"
           else
             HEADING="Release"
-            MODE="awaiting approval, then $FINISH"
+            MODE="awaiting approval — review the release notes below, then approve; then $FINISH"
           fi
           {
             echo "### $HEADING"
@@ -190,7 +190,7 @@ jobs:
             echo "| Previous tag | \`${LATEST:-(none yet)}\` |"
             echo "| Mode | $MODE |"
             echo ""
-            echo "#### Release notes"
+            echo "## Release notes"
             echo ""
             cat NOTES.md 2>/dev/null || echo "_(not generated — an earlier step failed)_"
             echo ""

@@ -68,10 +68,11 @@ Tags carry no `v` prefix, in any ecosystem.
    distribution channel.
 
 7. **The run pauses for approval.** The job that publishes to the real index is bound to the
-   `stable` environment, so it sits pending until a required reviewer approves it. There is no
-   draft to publish by hand — this is the confirmation step, and it sits here rather than
-   earlier because publishing and marking the release as latest are the only steps that
-   cannot be undone. By this point the artifacts exist and their version has been asserted
+   `stable` environment, so it sits pending until a required reviewer approves it. The
+   changelog for the version being released is in the `prepare` job summary on the run page;
+   read it before approving. There is no draft to publish by hand — this is the confirmation
+   step, and it sits here rather than earlier because publishing and marking the release as
+   latest are the only steps that cannot be undone. By this point the artifacts exist and their version has been asserted
    against the tag.
 
 8. On approval the artifacts go to the real index, and the prerelease is marked as the
