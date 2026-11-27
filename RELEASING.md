@@ -179,6 +179,11 @@ and then **stops before step 9**.
   `python-publish-to-pypi.yml` detoured candidates to Test PyPI, which no longer exists (see
   above, and [pypi/warehouse#11096](https://github.com/pypi/warehouse/issues/11096) for why).
 
+- **Container images get the exact tag only.** A candidate's image is tagged with its full
+  version and the commit sha, never `latest` or the `major.minor` / `major` tags, so pulling
+  `latest` still resolves to the last stable release. A candidate image also carries the label
+  `io.reqstool.prerelease=true`; a stable image has no such label.
+
 Shipping the real release afterwards is just the workflow again with `prerelease: none`.
 The candidates' tags stay where they are; nothing needs deleting.
 
