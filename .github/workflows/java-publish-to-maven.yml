@@ -12,7 +12,8 @@ on:
         description: "Java version to use."
         required: false
         type: string
-        default: "21"
+        # renovate: datasource=java-version depName=java
+        default: "25"
       ref:
         description: "Branch, tag or SHA to publish from. Empty = the caller's ref."
         required: false
